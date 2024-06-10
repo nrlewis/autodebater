@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "autodebater"
-version = "0.0.0"
+version = "0.0.1"
 description = "Library and CLI for debating LLMs"
 authors = ["Neal Lewis <imneal@gmail.com>"]
 license = "MIT"
