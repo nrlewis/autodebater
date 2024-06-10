@@ -7,13 +7,13 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.10,<3.13"
 PyYAML = "^6.0.1"
 langchain-openai = "^0.1.8"
 typer = "^0.12.3"
 numpy = "^1.26.4"
-
 coveralls = "^4.0.1"
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 pytest-mock = "^3.14.0"
@@ -21,12 +21,13 @@ pylint = "^3.2.3"
 pre-commit = "^3.7.1"
 python-semantic-release = "^9.8.1"
 
+ipython = "^8.25.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-    autodebate = "autodebater.run_debates:app"
+    autodebater = "autodebater.run_debates:app"
 
 [tool.semantic_release]
 version_toml = [ "pyproject.toml:tool.poetry.version" ]
