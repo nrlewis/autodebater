@@ -56,15 +56,15 @@ class Participant(ABC):
         system_msg = ("system", self.system_prompt)
         self.chat_history = [system_msg]
 
-    def __update_chat_history(self, messages):
+    def _update_chat_history(self, messages):
         self.chat_history.extend(messages)
 
     def respond(self, most_recent_chats: list[DialogueMessage]):
         """This method  updates the chat history the ongoing dialogue."""
         converted_chats = self.message_converter.convert_messages(most_recent_chats)
-        self.__update_chat_history(converted_chats)
+        self._update_chat_history(converted_chats)
         response = self.llm.generate_text_from_messages(self.chat_history)
-        self.__update_chat_history([("assistant", response)])
+        self._update_chat_history([("assistant", response)])
         return response
 
 
@@ -109,9 +109,9 @@ class Judge(Participant):
         Instructs the LLM to produce a summary and judgement of this judge's position
         """
         prompt = ("user", "Provide a summary of your judgement and a final score.")
-        self.__update_chat_history([prompt])
+        self._update_chat_history([prompt])
         response = self.llm.generate_text_from_messages(self.chat_history)
-        self.__update_chat_history([("assistant", response)])
+        self._update_chat_history([("assistant", response)])
         return response
 
 

@@ -111,5 +111,28 @@ def test_judge_respond(judge_mock_llm_wrapper_factory):
     judge_mock_llm_wrapper_factory.return_value.generate_text_from_messages.assert_called_once()  # pylint: disable=line-too-long
 
 
+def test_judge_summarize(judge_mock_llm_wrapper_factory):
+    # Create a Judge instance
+    name = "Judge1"
+    motion = "AI will surpass human intelligence"
+    role_prompt = EXPERT_JUDGE_PROMPT.format(motion=motion)
+    llm_provider = LLM_PROVIDER
+    model_params = {"model": "gpt-4o"}
+
+    judge = Judge(name, motion, role_prompt, llm_provider, **model_params)
+
+    # Define the most recent chats
+    # Call the respond method
+    response = judge.summarize_judgement()
+
+    # Verify the response
+    assert (
+        response
+        == "70 The arguments for the motion were "
+        + "well-structured and supported by evidence."
+    )
+    judge_mock_llm_wrapper_factory.return_value.generate_text_from_messages.assert_called_once()  # pylint: disable=line-too-long
+
+
 if __name__ == "__main__":
     pytest.main()
