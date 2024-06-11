@@ -19,12 +19,9 @@ The difference between the participants is as follows:
 import logging
 from abc import ABC
 
-from autodebater.defaults import (
-    BULLSHIT_DETECTOR_PROMPT,
-    DEBATER_PROMPT,
-    EXPERT_JUDGE_PROMPT,
-    LLM_PROVIDER,
-)
+from autodebater.defaults import (BULLSHIT_DETECTOR_PROMPT, DEBATER_PROMPT,
+                                  EXPERT_JUDGE_PROMPT, JUDGE_SUMMARY,
+                                  LLM_PROVIDER)
 from autodebater.dialogue import DialogueConverter, DialogueMessage
 from autodebater.llm import LLMWrapperFactory
 
@@ -60,15 +57,15 @@ class Participant(ABC):
         system_msg = ("system", self.system_prompt)
         self.chat_history = [system_msg]
 
-    def __update_chat_history(self, messages):
+    def _update_chat_history(self, messages):
         self.chat_history.extend(messages)
 
     def respond(self, most_recent_chats: list[DialogueMessage]):
         """This method  updates the chat history the ongoing dialogue."""
         converted_chats = self.message_converter.convert_messages(most_recent_chats)
-        self.__update_chat_history(converted_chats)
+        self._update_chat_history(converted_chats)
         response = self.llm.generate_text_from_messages(self.chat_history)
-        self.__update_chat_history([("assistant", response)])
+        self._update_chat_history([("assistant", response)])
         return response
 
 
@@ -107,6 +104,16 @@ class Judge(Participant):
     ):
         system_prompt = instruction_prompt.format(motion=motion)
         super().__init__(name, system_prompt, "judge", llm_provider, **model_params)
+
+    def summarize_judgement(self):
+        """
+        Instructs the LLM to produce a summary and judgement of this judge's position
+        """
+        prompt = ("user", JUDGE_SUMMARY)
+        self._update_chat_history([prompt])
+        response = self.llm.generate_text_from_messages(self.chat_history)
+        self._update_chat_history([("assistant", response)])
+        return response
 
 
 class BullshitDetector(Judge):

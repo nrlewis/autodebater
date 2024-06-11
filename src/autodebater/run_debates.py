@@ -3,48 +3,68 @@ CLI entry point for debates
 """
 
 import typer
+from rich.console import Console
+from rich.live import Live
+from rich.markdown import Markdown
+from rich.table import Table
 
-from autodebater.debate import JudgedDebate, SimpleDebate
-from autodebater.participants import BullshitDetector, Debater, Judge
+from autodebater.debate_runners import (BasicJudgedDebateRunner,
+                                        BasicSimpleDebateRunner)
+from autodebater.dialogue import DialogueMessage
 
 app = typer.Typer()
+
+
+def msg2table(msg: DialogueMessage):
+    table = Table("name", "role", "message")
+    table.add_row(msg.name, msg.role, msg.message)
+    return table
 
 
 @app.command()
 def judged_debate(motion: str, epochs: int = 2):
     """Start a new debate with the given motion and epochs."""
-    debate = JudgedDebate(motion=motion, epochs=epochs)
-
-    debater1 = Debater(name="Debater1", motion=motion, stance="for")
-    debater2 = Debater(name="Debater2", motion=motion, stance="against")
-    judge = Judge(name="Judge", motion=motion)
-    bullshit_detector = BullshitDetector(name="BullshitDetector", motion=motion)
-    # Add debaters to the debate
-    debate.add_debaters(debater1)
-    debate.add_debaters(debater2)
-    debate.add_judge(judge)
-    debate.add_judge(bullshit_detector)
+    debate_runner = BasicJudgedDebateRunner(motion=motion, epochs=epochs)
 
     typer.echo(f"Starting debate on: {motion}")
-    for msg in debate.debate():
-        typer.echo(f"{msg.timestamp} - {msg.name} ({msg.role}): {msg.message}")
+    console = Console()
+
+    table = Table("name", "role", "stance", "judgement", "message", show_lines=True)
+    with Live(table, auto_refresh=False, vertical_overflow="visible") as live:
+        for msg in debate_runner.run_debate():
+            table.add_row(
+                msg.name,
+                msg.role,
+                msg.stance,
+                str(msg.judgement),
+                Markdown(msg.message),
+            )
+            live.update(table, refresh=True)
+        # console.clear()
+        # console.print(table)
+
+    table = Table("Judge Name", "score", "judgement")
+    with Live(table, auto_refresh=False, vertical_overflow="visible") as live:
+        for msg in debate_runner.get_judgements():
+            table.add_row(msg[0], str(msg[1]), Markdown(msg[2]))
+            live.update(table, refresh=True)
+
+
+#     console.clear()
+#     console.print(table)
 
 
 @app.command()
 def simple_debate(motion: str, epochs: int = 2):
     """Start a new debate with the given motion and epochs."""
-    debate = SimpleDebate(motion=motion, epochs=epochs)
-
-    debater1 = Debater(name="Debater1", motion=motion, stance="for")
-    debater2 = Debater(name="Debater2", motion=motion, stance="against")
-
-    # Add debaters to the debate
-    debate.add_debaters(debater1)
-    debate.add_debaters(debater2)
+    debate_runner = BasicSimpleDebateRunner(motion=motion, epochs=epochs)
 
     typer.echo(f"Starting debate on: {motion}")
-    for msg in debate.debate():
-        typer.echo(f"{msg.timestamp} - {msg.name} ({msg.role}): {msg.message}")
+    console = Console()
+
+    for msg in debate_runner.run_debate():
+        table = msg2table(msg)
+        console.print(table)
 
 
 if __name__ == "__main__":

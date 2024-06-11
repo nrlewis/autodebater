@@ -21,6 +21,7 @@ SYSTEM_PROMPTS = defaults["system_prompts"]
 # Optional: Define specific prompts for convenience
 DEBATER_PROMPT = SYSTEM_PROMPTS["debater"]
 JUDGE_INSTRUCTION = SYSTEM_PROMPTS["judge_instruction"]
+JUDGE_SUMMARY = SYSTEM_PROMPTS["judge_summary"]
 
 EXPERT_JUDGE_PROMPT = SYSTEM_PROMPTS["expert_judge"] + "\n" + JUDGE_INSTRUCTION
 BULLSHIT_DETECTOR_PROMPT = (

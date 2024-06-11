@@ -65,4 +65,4 @@ integration:
 
 coverage: ## check code coverage quickly with the default Python
 	poetry run coverage run --source autodebater -m pytest -m 'not integration'
-	poetry run coveralls
+	#poetry run coveralls
