@@ -8,6 +8,7 @@ from unittest.mock import Mock, create_autospec
 
 import pytest
 
+from autodebater.dialogue import DialogueMessage
 from autodebater.participants import Debater, Judge
 
 
@@ -52,6 +53,21 @@ def mock_llm_wrapper_factory(mocker):
     mock_llm_wrapper.return_value = mock_instance
 
     return mock_llm_wrapper
+
+
+# @pytest.fixture
+# def patch_debate(mocker):
+#     mock_debate = mocker.patch("autodebater.debate.SimpleDebate")
+#
+#     debate = Mock()
+#     debate.debate.side_effect = [
+#         DialogueMessage("mod", "moderater", "please begin", "123")
+#         DialogueMessage("debater1", "debater", "I am for", "123")
+#         DialogueMessage("", "moderater", "please begin", "123")
+#         DialogueMessage("mod", "moderater", "please begin", "123")
+#     ]
+#     mock_debate.return_value = debate
+#     return debate
 
 
 @pytest.fixture

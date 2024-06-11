@@ -4,6 +4,7 @@ CLI entry point for debates
 
 import typer
 from rich.console import Console
+from rich.live import Live
 from rich.markdown import Markdown
 from rich.table import Table
 
@@ -21,7 +22,7 @@ def msg2table(msg: DialogueMessage):
 
 
 @app.command()
-def judged_debate(motion: str, epochs: int = 1):
+def judged_debate(motion: str, epochs: int = 2):
     """Start a new debate with the given motion and epochs."""
     debate_runner = BasicJudgedDebateRunner(motion=motion, epochs=epochs)
 
@@ -29,18 +30,28 @@ def judged_debate(motion: str, epochs: int = 1):
     console = Console()
 
     table = Table("name", "role", "stance", "judgement", "message", show_lines=True)
-    for msg in debate_runner.run_debate():
-        table.add_row(
-            msg.name, msg.role, msg.stance, str(msg.judgement), Markdown(msg.message)
-        )
-        console.clear()
-        console.print(table)
+    with Live(table, auto_refresh=False, vertical_overflow="visible") as live:
+        for msg in debate_runner.run_debate():
+            table.add_row(
+                msg.name,
+                msg.role,
+                msg.stance,
+                str(msg.judgement),
+                Markdown(msg.message),
+            )
+            live.update(table, refresh=True)
+        # console.clear()
+        # console.print(table)
 
     table = Table("Judge Name", "score", "judgement")
-    for msg in debate_runner.get_judgements():
-        table.add_row(msg[1], msg[2], Markdown(msg[3]))
-        console.clear()
-        console.print(table)
+    with Live(table, auto_refresh=False, vertical_overflow="visible") as live:
+        for msg in debate_runner.get_judgements():
+            table.add_row(msg[0], str(msg[1]), Markdown(msg[2]))
+            live.update(table, refresh=True)
+
+
+#     console.clear()
+#     console.print(table)
 
 
 @app.command()
