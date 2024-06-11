@@ -19,12 +19,8 @@ The difference between the participants is as follows:
 import logging
 from abc import ABC
 
-from autodebater.defaults import (
-    BULLSHIT_DETECTOR_PROMPT,
-    DEBATER_PROMPT,
-    EXPERT_JUDGE_PROMPT,
-    LLM_PROVIDER,
-)
+from autodebater.defaults import (BULLSHIT_DETECTOR_PROMPT, DEBATER_PROMPT,
+                                  EXPERT_JUDGE_PROMPT, LLM_PROVIDER)
 from autodebater.dialogue import DialogueConverter, DialogueMessage
 from autodebater.llm import LLMWrapperFactory
 
@@ -107,6 +103,16 @@ class Judge(Participant):
     ):
         system_prompt = instruction_prompt.format(motion=motion)
         super().__init__(name, system_prompt, "judge", llm_provider, **model_params)
+
+    def summarize_judgement(self):
+        """
+        Instructs the LLM to produce a summary and judgement of this judge's position
+        """
+        prompt = ("user", "Provide a summary of your judgement and a final score.")
+        self.__update_chat_history([prompt])
+        response = self.llm.generate_text_from_messages(self.chat_history)
+        self.__update_chat_history([("assistant", response)])
+        return response
 
 
 class BullshitDetector(Judge):

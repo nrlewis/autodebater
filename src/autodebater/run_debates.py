@@ -4,7 +4,7 @@ CLI entry point for debates
 
 import typer
 from rich.console import Console
-from rich.live import Live
+from rich.markdown import Markdown
 from rich.table import Table
 
 from autodebater.debate_runners import (BasicJudgedDebateRunner,
@@ -21,20 +21,26 @@ def msg2table(msg: DialogueMessage):
 
 
 @app.command()
-def judged_debate(motion: str, epochs: int = 2):
+def judged_debate(motion: str, epochs: int = 1):
     """Start a new debate with the given motion and epochs."""
     debate_runner = BasicJudgedDebateRunner(motion=motion, epochs=epochs)
 
     typer.echo(f"Starting debate on: {motion}")
     console = Console()
 
-    table = Table("name", "role", "message")
-    with Live(table, refresh_per_second=4):
-        for msg in debate_runner.run_debate():
-            table.add_row(msg.name, msg.role, msg.message)
-        # console.print(table)
+    table = Table("name", "role", "stance", "judgement", "message", show_lines=True)
+    for msg in debate_runner.run_debate():
+        table.add_row(
+            msg.name, msg.role, msg.stance, str(msg.judgement), Markdown(msg.message)
+        )
+        console.clear()
+        console.print(table)
 
-        # typer.echo(f"{msg.timestamp} - {msg.name} ({msg.role}): {msg.message}")
+    table = Table("Judge Name", "score", "judgement")
+    for msg in debate_runner.get_judgements():
+        table.add_row(msg[1], msg[2], Markdown(msg[3]))
+        console.clear()
+        console.print(table)
 
 
 @app.command()

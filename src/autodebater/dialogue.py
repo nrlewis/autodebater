@@ -19,6 +19,7 @@ class DialogueMessage:
     message: str
     debate_id: str
     stance: str = "neutral"
+    judgement: float | None = None  # default
     timestamp: datetime = field(default_factory=datetime.now)
 
     def to_dict(self):
@@ -27,6 +28,7 @@ class DialogueMessage:
             "name": self.name,
             "role": self.role,
             "stance": self.stance,
+            "judgement": self.judgement,
             "message": self.message,
             "debate_id": self.debate_id,
         }

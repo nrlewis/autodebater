@@ -40,6 +40,16 @@ class BasicJudgedDebateRunner(DebateRunner):
         for msg in self.debate.debate():
             yield msg
 
+    def get_judgements(self):
+        judgements = []
+        for judge in self.debate.judges:
+            resp = judge.summarize_judgement()
+            score, judgement = self.debate.parse_judgement(resp)
+            msg = (judge.name, score, judgement)
+            judgements.append(msg)
+
+        return judgements
+
 
 class BasicSimpleDebateRunner(DebateRunner):
     """

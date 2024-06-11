@@ -92,7 +92,10 @@ class JudgedDebate(Debate):
         i = 0
         first_debater_name = self.debaters[i].name
         msg = DialogueMessage(
-            "mod", "moderator", f"{first_debater_name} - please begin", self.debate_id
+            name="mod",
+            role="moderator",
+            message=f"{first_debater_name} - please begin",
+            debate_id=self.debate_id,
         )
         self.dialogue_history.add_message(msg)
         yield msg
@@ -101,7 +104,11 @@ class JudgedDebate(Debate):
             speaker = self.debaters[i % len(self.debaters)]
             response = speaker.respond([msg])
             msg = DialogueMessage(
-                speaker.name, speaker.role, response, self.debate_id, speaker.stance
+                name=speaker.name,
+                role=speaker.role,
+                message=response,
+                debate_id=self.debate_id,
+                stance=speaker.stance,
             )
             self.dialogue_history.add_message(msg)
             yield msg
@@ -111,14 +118,15 @@ class JudgedDebate(Debate):
                 judge_msg = DialogueMessage(
                     judge.name, judge.role, judgement, self.debate_id
                 )
-                self.dialogue_history.add_message(judge_msg)
 
                 try:
                     score, _ = self.parse_judgement(judgement)
+                    judge_msg.judgement = score
                     self.scores.append(score)
                 except JudgementParseError as e:
                     logger.exception(e)
 
+                self.dialogue_history.add_message(judge_msg)
                 self.running_score = geometric_mean(self.scores)
                 yield judge_msg
 
