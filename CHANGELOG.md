@@ -2,6 +2,27 @@
 
 
 
+## v0.0.2 (2024-06-12)
+
+### Fix
+
+* fix: lint cleanup ([`e3cfa60`](https://github.com/nrlewis/autodebater/commit/e3cfa60b6dbde532936050b61824956b713d570e))
+
+### Unknown
+
+* 1 pretty print the output (#2)
+
+* fix: autodebate -&gt; autodebater
+
+* feat: pretty print cli
+
+* chore: adding summary judgement
+
+* feat: add pretty print and summarization of judgements
+
+* feat: added pretty print ([`bf84b20`](https://github.com/nrlewis/autodebater/commit/bf84b20d765c5d80d2abc643c9f67a278fd695eb))
+
+
 ## v0.0.1 (2024-06-10)
 
 ### Fix
