@@ -27,7 +27,6 @@ def judged_debate(motion: str, epochs: int = 2):
     debate_runner = BasicJudgedDebateRunner(motion=motion, epochs=epochs)
 
     typer.echo(f"Starting debate on: {motion}")
-    console = Console()
 
     table = Table("name", "role", "stance", "judgement", "message", show_lines=True)
     with Live(table, auto_refresh=False, vertical_overflow="visible") as live:
@@ -40,18 +39,12 @@ def judged_debate(motion: str, epochs: int = 2):
                 Markdown(msg.message),
             )
             live.update(table, refresh=True)
-        # console.clear()
-        # console.print(table)
 
     table = Table("Judge Name", "score", "judgement")
     with Live(table, auto_refresh=False, vertical_overflow="visible") as live:
         for msg in debate_runner.get_judgements():
             table.add_row(msg[0], str(msg[1]), Markdown(msg[2]))
             live.update(table, refresh=True)
-
-
-#     console.clear()
-#     console.print(table)
 
 
 @app.command()

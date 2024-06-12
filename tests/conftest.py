@@ -8,7 +8,7 @@ from unittest.mock import Mock, create_autospec
 
 import pytest
 
-from autodebater.dialogue import DialogueMessage
+# from autodebater.dialogue import DialogueMessage
 from autodebater.participants import Debater, Judge
 
 
