@@ -2,6 +2,21 @@
 
 
 
+## v0.1.0 (2024-06-13)
+
+### Feature
+
+* feat: initial release ([`6c622e1`](https://github.com/nrlewis/autodebater/commit/6c622e1ebfcda2f280160330f5fb24034a92dc08))
+
+### Fix
+
+* fix: test pypi publishing ([`b014d99`](https://github.com/nrlewis/autodebater/commit/b014d99e6b881d6f08eca38101d9c62347a64990))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of github.com:nrlewis/autodebater ([`3794c27`](https://github.com/nrlewis/autodebater/commit/3794c273b2d1803584f57ee17e4d27d8c2c072b9))
+
+
 ## v0.0.2 (2024-06-12)
 
 ### Fix
