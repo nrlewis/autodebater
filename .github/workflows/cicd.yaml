@@ -52,22 +52,8 @@ jobs:
         run: |
           poetry run coverage run --source=src -m pytest -m 'not integration'
           poetry run coveralls
-  build:
-    needs: unit-test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-          cache: "pip" # caching pip dependencies
-      - run: pip install --upgrade pip poetry
-      - run: poetry install
-      - run: poetry build
-      - uses: actions/upload-artifact@master
-        with: dist
-        path: dist/
   release:
-    needs: build
+    needs: unit-test
     runs-on: ubuntu-latest
     concurrency: release
     permissions:
