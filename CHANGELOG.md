@@ -2,6 +2,23 @@
 
 
 
+## v0.1.2 (2024-06-14)
+
+### Chore
+
+* chore: update workflow ([`d605b9c`](https://github.com/nrlewis/autodebater/commit/d605b9c744d4a7b8d11d44c24fd45ef1fc8a4635))
+
+* chore: fix workflow to build dist ([`eb82135`](https://github.com/nrlewis/autodebater/commit/eb821356d9d20aeb174d9718ae384fd83f78654a))
+
+### Fix
+
+* fix: attempt push to testpypi ([`b1130f8`](https://github.com/nrlewis/autodebater/commit/b1130f81e07eb3aaaa27c17da0b187a19d1b9912))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of github.com:nrlewis/autodebater ([`f51eea1`](https://github.com/nrlewis/autodebater/commit/f51eea151a6666d98339b1081bdc409ea633766d))
+
+
 ## v0.1.1 (2024-06-14)
 
 ### Chore
