@@ -78,10 +78,8 @@ jobs:
         run: pip install --upgrade pip poetry
       - name: Install dependencies
         run: poetry install
-      - name: Ensure dist directory
-        run: |
-          mkdir -p dist
-          chmod -R 777 dist
+      - name: Ensure dist directory exists
+        run: mkdir -p dist
       - name: Build
         id: build
         run: poetry build
