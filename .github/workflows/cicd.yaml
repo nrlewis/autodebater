@@ -74,14 +74,13 @@ jobs:
         with:
           python-version: "3.10"
           cache: "pip" # caching pip dependencies
-      - name: Install poetry
-        run: pip install --upgrade pip poetry
-      - name: Install dependencies
-        run: poetry install
-      - name: Ensure dist directory exists
-        run: mkdir -p dist
-      - name: Build
+      - name: Run Poetry Build 
         id: build
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: 1.8.3 
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
         run: poetry build
 
       - name: Publish package to GitHub Release
