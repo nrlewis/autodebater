@@ -2,6 +2,23 @@
 
 
 
+## v0.1.1 (2024-06-14)
+
+### Chore
+
+* chore: updating actions workflows ([`aa48698`](https://github.com/nrlewis/autodebater/commit/aa486984970ed04410813ec27d3baf714e83e14e))
+
+* chore: fix build ([`2ac770b`](https://github.com/nrlewis/autodebater/commit/2ac770b802526e69570d95e58adebbaca55f7aee))
+
+### Fix
+
+* fix: update workflows for pypi release ([`4300947`](https://github.com/nrlewis/autodebater/commit/430094721c70c77cfaa87ebef221c55f9b133eae))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of github.com:nrlewis/autodebater ([`40f606c`](https://github.com/nrlewis/autodebater/commit/40f606c29ffdbdfcc497f4b2a63ac8189d91f621))
+
+
 ## v0.1.0 (2024-06-13)
 
 ### Feature
