@@ -2,6 +2,17 @@
 
 
 
+## v0.1.3 (2024-06-14)
+
+### Fix
+
+* fix: attempt push to testpypi ([`beac863`](https://github.com/nrlewis/autodebater/commit/beac863d41784e78127b4cfcbca4e95e5318aeab))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of github.com:nrlewis/autodebater ([`dba219e`](https://github.com/nrlewis/autodebater/commit/dba219e8c337aec1d162bab6d9314da74ad0ea4b))
+
+
 ## v0.1.2 (2024-06-14)
 
 ### Chore
