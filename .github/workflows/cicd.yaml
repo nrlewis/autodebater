@@ -74,9 +74,16 @@ jobs:
         with:
           python-version: "3.10"
           cache: "pip" # caching pip dependencies
-      - run: pip install --upgrade pip poetry
-      - run: poetry install
-      - run: poetry build
+      - name: Install poetry
+        run: pip install --upgrade pip poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Ensure dist directory
+        run: |
+          mkdir -p dist
+          chmod -R 777 dist
+      - name: Build
+        run: poetry build
 
       - name: Publish package to GitHub Release
         uses: python-semantic-release/upload-to-gh-release@v9.8.1
