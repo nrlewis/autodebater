@@ -2,6 +2,21 @@
 
 
 
+## v0.1.4 (2024-06-14)
+
+### Chore
+
+* chore: update workflow ([`cbb7646`](https://github.com/nrlewis/autodebater/commit/cbb764675cbfb788fc01dfb04a3a4283d0e8cacd))
+
+### Fix
+
+* fix: correct workflow yaml ([`1e8b6a1`](https://github.com/nrlewis/autodebater/commit/1e8b6a12c3d64f23ca33886bd24162e4bece23b6))
+
+* fix: correct workflow yaml ([`68217d4`](https://github.com/nrlewis/autodebater/commit/68217d43e568b9985a962e1217f7b11642b9dc19))
+
+* fix: use poetry action in workflow ([`1c36b02`](https://github.com/nrlewis/autodebater/commit/1c36b023dabffb27902cf3b0eea1b4fd1794c408))
+
+
 ## v0.1.3 (2024-06-14)
 
 ### Fix
