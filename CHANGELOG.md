@@ -2,6 +2,13 @@
 
 
 
+## v0.1.6 (2024-06-15)
+
+### Fix
+
+* fix: run push to testpypi ([`10eb0b6`](https://github.com/nrlewis/autodebater/commit/10eb0b6c64c3edb788cab4c2ff55ed6e47d54bf6))
+
+
 ## v0.1.5 (2024-06-15)
 
 ### Chore
