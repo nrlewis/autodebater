@@ -2,6 +2,21 @@
 
 
 
+## v0.1.5 (2024-06-15)
+
+### Chore
+
+* chore: push actions ([`5075b64`](https://github.com/nrlewis/autodebater/commit/5075b645aff84736c38ca6002092e6e8b2ae297e))
+
+### Fix
+
+* fix: run push to testpypi ([`9809de0`](https://github.com/nrlewis/autodebater/commit/9809de0b41de9d9d7eb07728f419a17c78984d9a))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of github.com:nrlewis/autodebater ([`e4b09d2`](https://github.com/nrlewis/autodebater/commit/e4b09d2acb8fb823dffb408acaabe7978a9a99a8))
+
+
 ## v0.1.4 (2024-06-14)
 
 ### Chore
