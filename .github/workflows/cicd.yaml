@@ -93,7 +93,7 @@ jobs:
 
       - name: Publish package distributions to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        if: steps.build.outcome == 'success' && github.ref_type == 'tag'
+        if: steps.build.outcome == 'success'
         with:
           repository-url: https://test.pypi.org/legacy/
 
