@@ -2,6 +2,13 @@
 
 
 
+## v0.1.7 (2024-06-15)
+
+### Fix
+
+* fix: pulish to test pypi ([`6180347`](https://github.com/nrlewis/autodebater/commit/6180347de406547801ea38b3f47b2170293c9ab4))
+
+
 ## v0.1.6 (2024-06-15)
 
 ### Fix
