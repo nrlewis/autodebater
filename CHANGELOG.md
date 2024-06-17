@@ -2,6 +2,17 @@
 
 
 
+## v0.1.9 (2024-06-17)
+
+### Fix
+
+* fix: reset numpy ([`0a59662`](https://github.com/nrlewis/autodebater/commit/0a59662fbfc38fdaa859f57d7e79b396d6bf1303))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of github.com:nrlewis/autodebater ([`e0789a4`](https://github.com/nrlewis/autodebater/commit/e0789a4156ccd57687e71a21aee0d326029a5ed2))
+
+
 ## v0.1.8 (2024-06-17)
 
 ### Fix
