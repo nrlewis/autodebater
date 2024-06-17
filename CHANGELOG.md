@@ -2,6 +2,17 @@
 
 
 
+## v0.1.8 (2024-06-17)
+
+### Fix
+
+* fix: bump numpy release ([`ebb4bd9`](https://github.com/nrlewis/autodebater/commit/ebb4bd910631a998025104a11218a2ee034fcb45))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of github.com:nrlewis/autodebater ([`c3d97c5`](https://github.com/nrlewis/autodebater/commit/c3d97c59552186c32cadc2f33fae88f0db1d9896))
+
+
 ## v0.1.7 (2024-06-15)
 
 ### Fix
