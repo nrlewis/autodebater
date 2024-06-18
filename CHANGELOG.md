@@ -2,6 +2,13 @@
 
 
 
+## v0.1.12 (2024-06-18)
+
+### Fix
+
+* fix: release to pypi ([`1a77285`](https://github.com/nrlewis/autodebater/commit/1a7728543cb238c7be065b1ea2ae4a227ed450f4))
+
+
 ## v0.1.11 (2024-06-18)
 
 ### Fix
