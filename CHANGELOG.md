@@ -2,6 +2,17 @@
 
 
 
+## v0.1.11 (2024-06-18)
+
+### Fix
+
+* fix: remove numpy ([`e788378`](https://github.com/nrlewis/autodebater/commit/e78837871140d841b25bb9f83d8abbb8ddbad270))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of github.com:nrlewis/autodebater ([`e40e7fd`](https://github.com/nrlewis/autodebater/commit/e40e7fd25d129de31f693862f5c97676bdd8bb86))
+
+
 ## v0.1.10 (2024-06-18)
 
 ### Fix
