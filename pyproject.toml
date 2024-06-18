@@ -11,7 +11,6 @@ python = ">=3.10,<3.13"
 langchain-openai = "^0.1.8"
 typer = "^0.12.3"
 pyyaml = "^6.0.1"
-numpy = "^1.9.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
