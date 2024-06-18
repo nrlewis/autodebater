@@ -2,6 +2,17 @@
 
 
 
+## v0.1.10 (2024-06-18)
+
+### Fix
+
+* fix: numpy resolve ([`87306ad`](https://github.com/nrlewis/autodebater/commit/87306adeca06a51022501032fe90cc95e5c3ee37))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of github.com:nrlewis/autodebater ([`4bfacba`](https://github.com/nrlewis/autodebater/commit/4bfacba9ab272d81a67eb34d4d6690ff8af0b666))
+
+
 ## v0.1.9 (2024-06-17)
 
 ### Fix
