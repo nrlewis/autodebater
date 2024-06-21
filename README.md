@@ -77,8 +77,16 @@ Commands:
 
 ### Example Usage
 
+#### Full CLI
+
 ```sh
 autodebater judged-debate "AI will surpass human intelligence" --epochs 2
+```
+
+#### With Poetry
+
+```sh
+poetry run autodebater judged-debate "AI will surpass human intelligence" --epochs 2
 ```
 
 ## Debates
