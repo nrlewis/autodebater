@@ -2,7 +2,7 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/nrlewis/autodebater/badge.svg?branch=main)](https://coveralls.io/github/nrlewis/autodebater?branch=main)
 ![GitHub Release](https://img.shields.io/github/v/release/nrlewis/autodebater)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nrlewis/autodebater/pylint.yml)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nrlewis/autodebater/cicd.yml)
 ![GitHub License](https://img.shields.io/github/license/nrlewis/autodebater)
 
 AutoDebater is a Python library and CLI for engaging Large Language Models (LLMs) in structured debates. It allows for the creation and management of debates between LLMs, including the ability to judge and score the arguments presented.
