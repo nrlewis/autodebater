@@ -177,6 +177,7 @@ You can increase or decrease the number of participants: debaters and judges.
 6. Prompt judegs to consider their expertise more than debate structure
 7. Review scoring mechanism and alignment with prompt strategy
 8. Configure with backend for saving debates
+9. Configure with Langchain actions, allowing debaters to pull information from external sources
 
 ## Contributing
 
