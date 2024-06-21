@@ -65,21 +65,20 @@ You can use the CLI to start a debate. For example:
 ```
  Usage: autodebater [OPTIONS] COMMAND [ARGS]...
 
-╭─ Options ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --install-completion          Install completion for the current shell.                                                                                                                                            │
-│ --show-completion             Show completion for the current shell, to copy it or customize the installation.                                                                                                     │
-│ --help                        Show this message and exit.                                                                                                                                                          │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ judged-debate   Start a new debate with the given motion and epochs.                                                                                                                                               │
-│ simple-debate   Start a new debate with the given motion and epochs.                                                                                                                                               │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+Options:
+ --install-completion          Install completion for the current shell.                                                                                                                                            │
+ --show-completion             Show completion for the current shell, to copy it or customize the installation.                                                                                                     │
+ --help                        Show this message and exit.                                                                                                                                                          │
+
+Commands:
+ judged-debate   Start a new debate with the given motion and epochs.                                                                                                                                               │
+ simple-debate   Start a new debate with the given motion and epochs.                                                                                                                                               │
 ```
 
 ### Example Usage
 
 ```sh
-poetry run autodebater judged_debate "AI will surpass human intelligence" --epochs 2
+autodebater judged_debate "AI will surpass human intelligence" --epochs 2
 ```
 
 ## Debates
