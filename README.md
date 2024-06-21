@@ -167,6 +167,17 @@ This file contains the configuration for Poetry, including dependencies and buil
 
 You can increase or decrease the number of participants: debaters and judges.
 
+## TODOs
+
+1. Extend LLMWrapper for Azure OpenAI and Claude
+2. AutoGenerate Names
+3. Insert Moderator for a moderated debate
+4. Allow prompt configuration from CLI
+5. Dynamically set judge expertise based on topic of motion rather than "you are an expert on this motion"
+6. Prompt judegs to consider their expertise more than debate structure
+7. Review scoring mechanism and alignment with prompt strategy
+8. Configure with backend for saving debates
+
 ## Contributing
 
 Contributions are welcome! Please follow these steps:
