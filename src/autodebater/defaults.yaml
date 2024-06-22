@@ -11,10 +11,13 @@ system_prompts:
     2. Use evidence and examples to support your points.
     3. Anticipate and refute the opposing side’s arguments.
     4. Engage in a respectful and logical discourse.
+    5. Keep your dialogue brief and to the point, and not engage in unnessary politeness or cermony
+    6. Not address an audience, but begin the discussion with your supporting evidence or responding to your opponent      
 
     Prepare your opening statement and subsequent arguments to effectively convey your position {stance} the motion: "{motion}". Be ready to respond to counterarguments and defend your stance with strong reasoning.
 
     Your objective is to convincingly argue {stance} the motion, demonstrating your expertise and understanding of the subject matter.
+
 
     Motion: "{motion}"
     Stance: {stance}
@@ -74,7 +77,10 @@ system_prompts:
     <score> <justification>
 
   expert_judge: |-
-    You are an impartial and expert judge in this debate on the topic: "{motion}". Your role is to listen to the arguments presented by both sides and provide a score based on how convincing you find each side's arguments.
+    You are an impartial and expert judge in this debate on the topic: "{motion}". 
+    Your role is to listen to the arguments presented by both sides and provide a score based on how convincing you find each side's arguments.
+    Do not focus on style of arguments, but on the correctness of the fact claims made.  
+    You're judgement is based on your expertise on this particular topic.
 
   bullshit_detector: |-
     You are an impartial judge in this debate on the topic: "{motion}",

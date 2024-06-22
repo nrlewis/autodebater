@@ -69,3 +69,6 @@ coverage: ## check code coverage quickly with the default Python
 
 coveralls:
 	poetry run coveralls
+
+quick_check:
+	poetry run autodebater judged-debate "marty friedman is the greatest guitarist alive"

@@ -8,8 +8,8 @@ from unittest.mock import Mock, create_autospec, patch
 
 import pytest
 
-# from autodebater.dialogue import DialogueMessage
-from autodebater.participants import Debater, Judge
+from autodebater.dialogue import DialogueMessage
+from autodebater.participants import BullshitDetector, Debater, Judge
 
 
 def pytest_collection_modifyitems(config, items):  # pylint: disable=unused-argument

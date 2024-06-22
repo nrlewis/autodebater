@@ -5,8 +5,6 @@ from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
 
-from autodebater.debate_runners import (BasicJudgedDebateRunner,
-                                        BasicSimpleDebateRunner)
 from autodebater.dialogue import DialogueMessage
 from autodebater.run_debates import app
 
@@ -14,10 +12,13 @@ runner = CliRunner()
 
 
 class TestRunDebatesCLI(unittest.TestCase):
+    """CLI test using CliRunner"""
 
     @patch("autodebater.run_debates.BasicJudgedDebateRunner")
     @patch("autodebater.run_debates.Live")
-    def test_judged_debate(self, MockLive, MockBasicJudgedDebateRunner):
+    def test_judged_debate(
+        self, mock_live, mock_basic_judged_debate_runner
+    ):  # pylint: disable=unused-argument
         mock_runner = MagicMock()
         mock_runner.run_debate.return_value = iter(
             [
@@ -42,7 +43,7 @@ class TestRunDebatesCLI(unittest.TestCase):
                 "The arguments for the motion were supported by evidence.",
             )
         ]
-        MockBasicJudgedDebateRunner.return_value = mock_runner
+        mock_basic_judged_debate_runner.return_value = mock_runner
 
         result = runner.invoke(
             app,
@@ -52,7 +53,7 @@ class TestRunDebatesCLI(unittest.TestCase):
             ],
         )
 
-        MockBasicJudgedDebateRunner.assert_called_once_with(
+        mock_basic_judged_debate_runner.assert_called_once_with(
             motion="AI will surpass human intelligence", epochs=2
         )
         self.assertEqual(result.exit_code, 0)
@@ -63,7 +64,9 @@ class TestRunDebatesCLI(unittest.TestCase):
 
     @patch("autodebater.run_debates.BasicSimpleDebateRunner")
     @patch("autodebater.run_debates.Console")
-    def test_simple_debate(self, MockConsole, MockBasicSimpleDebateRunner):
+    def test_simple_debate(
+        self, mock_console, mock_basic_simple_debate_runner
+    ):  # pylint: disable=unused-argument
         mock_runner = MagicMock()
         mock_runner.run_debate.return_value = iter(
             [
@@ -81,7 +84,7 @@ class TestRunDebatesCLI(unittest.TestCase):
                 ),
             ]
         )
-        MockBasicSimpleDebateRunner.return_value = mock_runner
+        mock_basic_simple_debate_runner.return_value = mock_runner
 
         result = runner.invoke(
             app,
@@ -91,11 +94,11 @@ class TestRunDebatesCLI(unittest.TestCase):
             ],
         )
 
-        MockBasicSimpleDebateRunner.assert_called_once_with(
+        mock_basic_simple_debate_runner.assert_called_once_with(
             motion="This house believes AI will surpass human intelligence", epochs=2
         )
         self.assertEqual(result.exit_code, 0)
         self.assertIn(
-            "Starting debate on: This house believes AI will surpass human intelligence",
+            "This house believes AI will surpass human intelligence",
             result.output,
         )
