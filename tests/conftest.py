@@ -4,7 +4,7 @@ Confest conifguration.
 Keep all fixutres here.
 """
 
-from unittest.mock import Mock, create_autospec
+from unittest.mock import Mock, create_autospec, patch
 
 import pytest
 
@@ -55,19 +55,19 @@ def mock_llm_wrapper_factory(mocker):
     return mock_llm_wrapper
 
 
-# @pytest.fixture
-# def patch_debate(mocker):
-#     mock_debate = mocker.patch("autodebater.debate.SimpleDebate")
-#
-#     debate = Mock()
-#     debate.debate.side_effect = [
-#         DialogueMessage("mod", "moderater", "please begin", "123")
-#         DialogueMessage("debater1", "debater", "I am for", "123")
-#         DialogueMessage("", "moderater", "please begin", "123")
-#         DialogueMessage("mod", "moderater", "please begin", "123")
-#     ]
-#     mock_debate.return_value = debate
-#     return debate
+@pytest.fixture
+def patch_debate(mocker):
+    mock_debate = mocker.patch("autodebater.debate.SimpleDebate")
+
+    debate = Mock()
+    debate.debate.side_effect = [
+        DialogueMessage("mod", "moderater", "please begin", "123"),
+        DialogueMessage("debater1", "debater", "I am for", "123"),
+        DialogueMessage("", "moderater", "please begin", "123"),
+        DialogueMessage("mod", "moderater", "please begin", "123"),
+    ]
+    mock_debate.return_value = debate
+    return debate
 
 
 @pytest.fixture
@@ -97,7 +97,7 @@ def mock_debater2():
 
 
 @pytest.fixture
-def mock_judge():
+def mock_judge1():
     judge = create_autospec(Judge, instance=True)
     judge.name = "Judge1"
     judge.role = "judge"
@@ -119,3 +119,47 @@ def mock_judge_with_bad_return():
         + "and supported by evidence.",
     ]
     return judge
+
+
+# tests/conftest.py
+
+
+@pytest.fixture
+def mock_judged_debate():
+    with patch("autodebater.debate.JudgedDebate") as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_simple_debate():
+    with patch("autodebater.debate.SimpleDebate") as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_debater():
+    debater = create_autospec(Debater, instance=True)
+    debater.name = "Debater1"
+    debater.role = "debater"
+    debater.stance = "for"
+    debater.respond.return_value = "Mocked response"
+    return debater
+
+
+@pytest.fixture
+def mock_judge():
+    judge = create_autospec(Judge, instance=True)
+    judge.name = "Judge"
+    judge.role = "judge"
+    judge.respond.return_value = "70 Mocked judgement"
+    judge.summarize_judgement.return_value = "70 Mocked final judgement"
+    return judge
+
+
+@pytest.fixture
+def mock_bullshit_detector():
+    detector = create_autospec(BullshitDetector, instance=True)
+    detector.name = "BullshitDetector"
+    detector.role = "judge"
+    detector.respond.return_value = "50 Mocked judgement"
+    return detector

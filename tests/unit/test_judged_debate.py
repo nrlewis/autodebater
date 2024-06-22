@@ -24,10 +24,10 @@ def test_add_debater(mock_debater1):
     assert mock_debater1 in debate.debaters
 
 
-def test_add_judge(mock_judge):
+def test_add_judge(mock_judge1):
     debate = JudgedDebate(motion="AI will surpass human intelligence")
-    debate.add_judge(mock_judge)
-    assert mock_judge in debate.judges
+    debate.add_judge(mock_judge1)
+    assert mock_judge1 in debate.judges
 
 
 def test_parse_judgement():
@@ -44,12 +44,12 @@ def test_parse_judgement():
     )
 
 
-def test_debate_flow(mock_debater1, mock_debater2, mock_judge):
+def test_debate_flow(mock_debater1, mock_debater2, mock_judge1):
 
     debate = JudgedDebate(motion="AI will surpass human intelligence", epochs=1)
     debate.add_debaters(mock_debater1)
     debate.add_debaters(mock_debater2)
-    debate.add_judge(mock_judge)
+    debate.add_judge(mock_judge1)
 
     debate_generator = debate.debate()
 
@@ -68,14 +68,14 @@ def test_debate_flow(mock_debater1, mock_debater2, mock_judge):
 
     # Check the first judgement
     first_judgement = next(debate_generator)
-    mock_judge.respond.assert_called_once()
+    mock_judge1.respond.assert_called_once()
     assert (
         first_judgement.message
         == "70 The arguments for the motion were well-structured and "
         + "supported by evidence."
     )
-    assert first_judgement.name == mock_judge.name
-    assert first_judgement.role == mock_judge.role
+    assert first_judgement.name == mock_judge1.name
+    assert first_judgement.role == mock_judge1.role
 
     current_score = next(debate_generator)
     assert current_score.message == "Current Score is 70.0"
@@ -96,8 +96,8 @@ def test_debate_flow(mock_debater1, mock_debater2, mock_judge):
         == "60 The arguments against the motion were convincing but "
         + "had minor flaws."
     )
-    assert second_judgement.name == mock_judge.name
-    assert second_judgement.role == mock_judge.role
+    assert second_judgement.name == mock_judge1.name
+    assert second_judgement.role == mock_judge1.role
     assert debate.scores == [70.0, 60.0]
     assert 65 > debate.running_score > 64
 
