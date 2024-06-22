@@ -116,24 +116,6 @@ class Judge(Participant):
         return response
 
 
-class ExpertJudge(Judge):
-    """
-    Specific type of judge encapsulated in a class
-    Throws a pylint error for useless parent, however the parent here sets
-    a default prompt, so ignoring the error
-    """
-
-    def __init__(  # pylint: disable=useless-parent-delegation
-        self,
-        name: str,
-        motion: str,
-        instruction_prompt: str = EXPERT_JUDGE_PROMPT,
-        llm_provider: str = LLM_PROVIDER,
-        **model_params,
-    ):
-        super().__init__(name, motion, instruction_prompt, llm_provider, **model_params)
-
-
 class BullshitDetector(Judge):
     """
     Specific type of judge encapsulated in a class

@@ -3,22 +3,22 @@
 import unittest
 from unittest.mock import MagicMock, create_autospec, patch
 
-from autodebater.debate import JudgedDebate, SimpleDebate
 from autodebater.debate_runners import (BasicJudgedDebateRunner,
                                         BasicSimpleDebateRunner)
 from autodebater.dialogue import DialogueMessage
-from autodebater.participants import BullshitDetector, Debater, Judge
+from autodebater.participants import Judge
 
 
 class TestBasicJudgedDebateRunner(unittest.TestCase):
+    """patch and mock the Basic Judged Debate Runners"""
 
     @patch("autodebater.debate.JudgedDebate")
     @patch("autodebater.participants.Debater")
     @patch("autodebater.participants.Judge")
     @patch("autodebater.participants.BullshitDetector")
     def test_initialization(
-        self, MockBullshitDetector, MockJudge, MockDebater, MockJudgedDebate
-    ):
+        self, mock_bullshit_detector, mock_judge, mock_debater, mock_judged_debate
+    ):  # pylint: disable=unused-argument
         motion = "This house believes AI will surpass human intelligence"
         runner = BasicJudgedDebateRunner(motion)
 
@@ -32,8 +32,8 @@ class TestBasicJudgedDebateRunner(unittest.TestCase):
     @patch("autodebater.participants.Judge")
     @patch("autodebater.participants.BullshitDetector")
     def test_run_debate(
-        self, MockBullshitDetector, MockJudge, MockDebater, MockJudgedDebate
-    ):
+        self, mock_bullshit_detector, mock_judge, mock_debater, mock_judged_debate
+    ):  # pylint: disable=unused-argument
         motion = "This house believes AI will surpass human intelligence"
         runner = BasicJudgedDebateRunner(motion)
 
@@ -66,13 +66,16 @@ class TestBasicJudgedDebateRunner(unittest.TestCase):
     @patch("autodebater.participants.Judge")
     @patch("autodebater.participants.BullshitDetector")
     def test_get_judgements(
-        self, MockBullshitDetector, MockJudge, MockDebater, MockJudgedDebate
-    ):
+        self, mock_bullshit_detector, mock_judge, mock_debater, mock_judged_debate
+    ):  # pylint: disable=unused-argument
         motion = "This house believes AI will surpass human intelligence"
         runner = BasicJudgedDebateRunner(motion)
 
         mock_judge = create_autospec(Judge, instance=True)
-        mock_judge.summarize_judgement.return_value = "70 The arguments for the motion were well-structured and supported by evidence."
+        mock_judge.summarize_judgement.return_value = (
+            "70 The arguments for the motion were "
+            "well-structured and supported by evidence."
+        )
         mock_judge.name = "Judge"
         runner.debate.judges = [mock_judge]
 
@@ -83,16 +86,22 @@ class TestBasicJudgedDebateRunner(unittest.TestCase):
             (
                 "Judge",
                 70.0,
-                "The arguments for the motion were well-structured and supported by evidence.",
+                (
+                    "The arguments for the motion were "
+                    "well-structured and supported by evidence."
+                ),
             ),
         )
 
 
 class TestBasicSimpleDebateRunner(unittest.TestCase):
+    """patch and mock a Simple Debate Runner for unit testing"""
 
     @patch("autodebater.debate.SimpleDebate")
     @patch("autodebater.participants.Debater")
-    def test_initialization(self, MockDebater, MockSimpleDebate):
+    def test_initialization(
+        self, mock_debater, mock_simple_debate
+    ):  # pylint: disable=unused-argument
         motion = "This house believes AI will surpass human intelligence"
         runner = BasicSimpleDebateRunner(motion)
 
@@ -102,7 +111,9 @@ class TestBasicSimpleDebateRunner(unittest.TestCase):
 
     @patch("autodebater.debate.SimpleDebate")
     @patch("autodebater.participants.Debater")
-    def test_run_debate(self, MockDebater, MockSimpleDebate):
+    def test_run_debate(
+        self, mock_debater, mock_simple_debate
+    ):  # pylint: disable=unused-argument
         motion = "This house believes AI will surpass human intelligence"
         runner = BasicSimpleDebateRunner(motion)
 
