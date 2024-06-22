@@ -2,6 +2,41 @@
 
 
 
+## v0.1.13 (2024-06-22)
+
+### Documentation
+
+* docs: update READMe ([`3e43dfb`](https://github.com/nrlewis/autodebater/commit/3e43dfb7de8811064d28a6ced02849a86fa65f92))
+
+* docs: update READMe ([`2e60c61`](https://github.com/nrlewis/autodebater/commit/2e60c613535eff91cd0a2dcbcccd4798e6f6b42e))
+
+* docs: update badegs ([`9d6c696`](https://github.com/nrlewis/autodebater/commit/9d6c696ac98a169c00c09ea2b728311f14e0d478))
+
+* docs: update README ([`db341f3`](https://github.com/nrlewis/autodebater/commit/db341f3b26602c34a0c23a9799bac54d4195d25a))
+
+* docs: update README ([`c0df8ed`](https://github.com/nrlewis/autodebater/commit/c0df8ed72f181d2fed590a90ba53813e98736069))
+
+* docs: update README ([`313f98e`](https://github.com/nrlewis/autodebater/commit/313f98e483a5b6a7b7abf3859bfc87f57825f3a0))
+
+* docs: cleaner formattin on README ([`263ff00`](https://github.com/nrlewis/autodebater/commit/263ff0062a653f26c769baab4535e9f669fd05bd))
+
+* docs: cleaner formattin on README ([`e899d97`](https://github.com/nrlewis/autodebater/commit/e899d9738db759394b9c6cdd8bb32e1442e95636))
+
+* docs: updating README ([`5dca48b`](https://github.com/nrlewis/autodebater/commit/5dca48bd8d96ab04f020ff31f71fea029d5b6975))
+
+### Fix
+
+* fix: adjust prompts for judges to consider expertise more (#6)
+
+* fix: adjust prompts for judges to consider expertise more
+
+* chore: clean up lint ([`b37fd29`](https://github.com/nrlewis/autodebater/commit/b37fd2971ad736ca2aaca815a917359d1ef27026))
+
+### Test
+
+* test: add cli and debate_runner tests (#4) ([`04172d2`](https://github.com/nrlewis/autodebater/commit/04172d22f88fc42d927b311554d87932d25e9b4e))
+
+
 ## v0.1.12 (2024-06-18)
 
 ### Fix
