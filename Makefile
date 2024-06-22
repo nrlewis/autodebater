@@ -58,11 +58,14 @@ test-all: ## run tests on every Python version with tox
 	PYTHONPATH=src tox
 
 test:
-	poetry run  pytest -m 'not integration'  -vv
+	poetry run  pytest -m 'not integration'  -vv 
 
 integration:
 	poetry run pytest -m 'integration'  -vv
 
 coverage: ## check code coverage quickly with the default Python
 	poetry run coverage run --source autodebater -m pytest -m 'not integration'
-	#poetry run coveralls
+	poetry run coverage report
+
+coveralls:
+	poetry run coveralls
