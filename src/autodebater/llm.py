@@ -70,7 +70,6 @@ class AzureOpenAILLMWrapper(LLMWrapper):
 
         self.model_params = model_params
         if len(self.model_params) == 0:
-            self.model_params = AZURE_OPENAI_MODEL_PARAMS
             logger.info("Setting AZURE OpenAI model params to %s", self.model_params)
 
         if os.getenv("AZURE_OPENAI_API_KEY", None) is None:

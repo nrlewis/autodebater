@@ -23,7 +23,7 @@ def msg2table(msg: DialogueMessage):
 @app.command()
 def judged_debate(motion: str, epochs: int = 2, llm: str = "openai"):
     """Start a new debate with the given motion and epochs."""
-    debate_runner = BasicJudgedDebateRunner(motion=motion, epochs=epochs)
+    debate_runner = BasicJudgedDebateRunner(motion=motion, epochs=epochs, llm=llm)
 
     typer.echo(f"Starting debate on: {motion}")
 
