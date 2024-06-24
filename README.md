@@ -56,6 +56,15 @@ Before using AutoDebater, you need to set your OpenAI API key:
 export OPENAI_API_KEY="your_openai_api_key"
 ```
 
+If using Azure, you must set several environment variables:
+
+```sh
+export AZURE_OPENAI_API_KEY="your_azure_api_key"
+export AZURE_OPENAI_ENDPOINT="your_azure_api_endpoint"
+export AZURE_OPENAI_API_VERSION="you_azure_api_version"
+export AZURE_OPENAI_CHAT_DEPLOYMENT_NAME="your_azure_model_deployment_name"
+```
+
 ## Usage
 
 ### CLI
@@ -108,7 +117,7 @@ After the epochs are completed, the judges will summarize their interpretations 
 
 ### Scoring
 
-The score is set such that a score closer to zero means the judges are AGAINST the motion, and a score closer to 100 means they are FOR the motion.  
+The score is set such that a score closer to zero means the judges are AGAINST the motion, and a score closer to 100 means they are FOR the motion.
 There is a running score showing the geometric mean of the score.
 
 ## Conceptual Description of the OOP Model

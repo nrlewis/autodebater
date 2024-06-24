@@ -8,8 +8,7 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.table import Table
 
-from autodebater.debate_runners import (BasicJudgedDebateRunner,
-                                        BasicSimpleDebateRunner)
+from autodebater.debate_runners import BasicJudgedDebateRunner, BasicSimpleDebateRunner
 from autodebater.dialogue import DialogueMessage
 
 app = typer.Typer()
@@ -22,9 +21,9 @@ def msg2table(msg: DialogueMessage):
 
 
 @app.command()
-def judged_debate(motion: str, epochs: int = 2):
+def judged_debate(motion: str, epochs: int = 2, llm: str = "openai"):
     """Start a new debate with the given motion and epochs."""
-    debate_runner = BasicJudgedDebateRunner(motion=motion, epochs=epochs)
+    debate_runner = BasicJudgedDebateRunner(motion=motion, epochs=epochs, llm=llm)
 
     typer.echo(f"Starting debate on: {motion}")
 
@@ -48,9 +47,9 @@ def judged_debate(motion: str, epochs: int = 2):
 
 
 @app.command()
-def simple_debate(motion: str, epochs: int = 2):
+def simple_debate(motion: str, epochs: int = 2, llm: str = "openai"):
     """Start a new debate with the given motion and epochs."""
-    debate_runner = BasicSimpleDebateRunner(motion=motion, epochs=epochs)
+    debate_runner = BasicSimpleDebateRunner(motion=motion, epochs=epochs, llm=llm)
 
     typer.echo(f"Starting debate on: {motion}")
     console = Console()
