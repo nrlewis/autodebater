@@ -2,6 +2,31 @@
 
 
 
+## v0.1.14 (2024-06-24)
+
+### Fix
+
+* fix: bump version (#11)
+
+Co-authored-by: Neal Lewis &lt;neal.lewis@benevolent.ai&gt; ([`2a9b723`](https://github.com/nrlewis/autodebater/commit/2a9b72362c5a394fdbf01e33300d6906cbcf6511))
+
+### Unknown
+
+* 9 extend llmwrapper for azure (#10)
+
+* chore: adding llm and azure arguments
+
+* fix: add azure to llmwrapper factory
+
+* chore: update workflow with null env vars
+
+* docs: update README with azure env variables
+
+---------
+
+Co-authored-by: Neal Lewis &lt;neal.lewis@benevolent.ai&gt; ([`f12ffc3`](https://github.com/nrlewis/autodebater/commit/f12ffc3181d2d481d06f1c0a105766ea6dc8f1b5))
+
+
 ## v0.1.13 (2024-06-22)
 
 ### Documentation
