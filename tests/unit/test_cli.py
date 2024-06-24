@@ -95,7 +95,9 @@ class TestRunDebatesCLI(unittest.TestCase):
         )
 
         mock_basic_simple_debate_runner.assert_called_once_with(
-            motion="This house believes AI will surpass human intelligence", epochs=2
+            motion="This house believes AI will surpass human intelligence",
+            epochs=2,
+            llm="openai",
         )
         self.assertEqual(result.exit_code, 0)
         self.assertIn(

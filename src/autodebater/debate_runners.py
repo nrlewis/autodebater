@@ -22,13 +22,19 @@ class BasicJudgedDebateRunner(DebateRunner):
     Execute a basic debate with two debaters, and two judges
     """
 
-    def __init__(self, motion: str, epochs: int = 2):
+    def __init__(self, motion: str, epochs: int = 2, llm: str = "openai"):
         self.debate = JudgedDebate(motion=motion, epochs=epochs)
 
-        debater1 = Debater(name="Debater1", motion=motion, stance="for")
-        debater2 = Debater(name="Debater2", motion=motion, stance="against")
-        judge = Judge(name="Judge", motion=motion)
-        bullshit_detector = BullshitDetector(name="BullshitDetector", motion=motion)
+        debater1 = Debater(
+            name="Debater1", motion=motion, stance="for", llm_provider=llm
+        )
+        debater2 = Debater(
+            name="Debater2", motion=motion, stance="against", llm_provider=llm
+        )
+        judge = Judge(name="Judge", motion=motion, llm_provider=llm)
+        bullshit_detector = BullshitDetector(
+            name="BullshitDetector", motion=motion, llm_provider=llm
+        )
         # Add debaters to the debate
         self.debate.add_debaters(debater1)
         self.debate.add_debaters(debater2)
@@ -56,11 +62,15 @@ class BasicSimpleDebateRunner(DebateRunner):
     Execute a Basic Debate with two debaters
     """
 
-    def __init__(self, motion: str, epochs: int = 2):
+    def __init__(self, motion: str, epochs: int = 2, llm: str = "openai"):
         self.debate = SimpleDebate(motion=motion, epochs=epochs)
 
-        debater1 = Debater(name="Debater1", motion=motion, stance="for")
-        debater2 = Debater(name="Debater2", motion=motion, stance="against")
+        debater1 = Debater(
+            name="Debater1", motion=motion, stance="for", llm_provider=llm
+        )
+        debater2 = Debater(
+            name="Debater2", motion=motion, stance="against", llm_provider=llm
+        )
 
         # Add debaters to the debate
         self.debate.add_debaters(debater1)
