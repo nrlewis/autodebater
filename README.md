@@ -50,11 +50,17 @@ AutoDebater uses Poetry for dependency management. You can install it with the f
 
 ## Setup
 
-Before using AutoDebater, you need to set your OpenAI API key:
+Before using AutoDebater, you need to set your keys:
+
+### OpenAI
+
+If using OpenAI:
 
 ```sh
 export OPENAI_API_KEY="your_openai_api_key"
 ```
+
+### Azure OpenAI
 
 If using Azure, you must set several environment variables:
 
