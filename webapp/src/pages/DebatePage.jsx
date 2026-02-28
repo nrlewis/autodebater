@@ -29,12 +29,15 @@ export default function DebatePage() {
         if (!motion && msg.debate_id) {
           // pick up mode hint if available (not in message, but we detect panel via role)
         }
-        setMessages((prev) => {
-          // Update motion from first non-moderator debater message if not set
-          return [...prev, msg];
-        });
-        // Auto-scroll
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+        setMessages((prev) => [...prev, msg]);
+        // Only auto-scroll if the user is already near the bottom
+        setTimeout(() => {
+          const distanceFromBottom =
+            document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+          if (distanceFromBottom < 150) {
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 50);
       },
       (err) => setError(err),
       () => setDone(true)
@@ -60,7 +63,7 @@ export default function DebatePage() {
       <div className="debate-header">
         <h1>{motionText}</h1>
         <div className="debate-meta">
-          <span className="badge">{mode}</span>
+          <span className="badge">{mode === "panel" ? "discussion" : mode}</span>
           <span>{debateId.slice(0, 8)}</span>
         </div>
       </div>
@@ -73,10 +76,10 @@ export default function DebatePage() {
         {!done && !error && (
           <>
             <span className="spinner" />
-            Debate in progress…
+            {mode === "panel" ? "Discussion in progress…" : "Debate in progress…"}
           </>
         )}
-        {done && !error && "Debate complete."}
+        {done && !error && (mode === "panel" ? "Discussion complete." : "Debate complete.")}
         {error && <span className="error">Error: {error}</span>}
       </div>
 

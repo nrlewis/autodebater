@@ -25,6 +25,22 @@ export async function getDebate(debateId) {
   return res.json();
 }
 
+export async function getProfile() {
+  const res = await fetch(`${BASE}/profile`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json(); // { content: string }
+}
+
+export async function saveProfile(content) {
+  const res = await fetch(`${BASE}/profile`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 /**
  * Opens an SSE connection to stream debate messages.
  * @param {string} debateId

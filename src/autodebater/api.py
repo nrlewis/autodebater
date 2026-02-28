@@ -24,6 +24,7 @@ from autodebater.debate_runners import (
     RunnerConfig,
 )
 from autodebater.persistence import DebateExporter, DebateStore
+from autodebater.profile import ProfileStore
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +50,16 @@ class DebateRequest(BaseModel):
     judge_prompt: Optional[str] = None
     model: Optional[str] = None
     temperature: Optional[float] = None
-    use_tools: bool = False
+    use_tools: Optional[bool] = None  # None = mode-dependent default
     domains: Optional[List[str]] = None
+    context: Optional[str] = None     # override profile context for this debate
 
 
 def _build_runner(req: DebateRequest):
+    # Panel defaults to tools-on (evidence-backed discussion); debates default off
+    use_tools = req.use_tools if req.use_tools is not None else (req.mode == "panel")
+    # Auto-load profile unless the request supplies explicit context
+    context = req.context or ProfileStore().load()
     config = RunnerConfig(
         motion=req.motion,
         epochs=req.epochs,
@@ -62,8 +68,9 @@ def _build_runner(req: DebateRequest):
         judge_prompt=req.judge_prompt,
         model=req.model,
         temperature=req.temperature,
-        use_tools=req.use_tools,
+        use_tools=use_tools,
         domains=req.domains,
+        context=context,
     )
     if req.mode == "panel":
         return ExpertPanelRunner(config)
@@ -87,6 +94,18 @@ def _run_in_thread(debate_id: str, runner):
             DebateStore().save(runner.debate.dialogue_history, motion)
         except Exception:
             pass
+
+
+@app.get("/api/profile")
+async def get_profile():
+    content = ProfileStore().load()
+    return {"content": content or ""}
+
+
+@app.put("/api/profile")
+async def save_profile(payload: dict):
+    ProfileStore().save(payload.get("content", ""))
+    return {"status": "saved"}
 
 
 @app.post("/api/debates")

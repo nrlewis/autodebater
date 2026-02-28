@@ -36,6 +36,8 @@ class Participant(ABC):
     Abstract class for each participant.  initialization
     sets the model to be used, and the system prompt
     message for each model.
+
+    Pass tools=[...] to enable a ReAct search loop — any LangChain tool works.
     """
 
     def __init__(
@@ -44,18 +46,30 @@ class Participant(ABC):
         system_prompt: str,
         role: str,
         llm_provider: str,
+        tools: list = None,
+        context: str = None,
         **model_params,
     ):
 
         self.name = name
         self.role = role
-        self.system_prompt = system_prompt
         self.llm_provider = llm_provider
         self.model_params = model_params
+        self.tools = tools or []
+
+        if context:
+            system_prompt = system_prompt + f"\n\n## User Context\n{context}"
+        self.system_prompt = system_prompt
 
         self.llm = LLMWrapperFactory.create_llm_wrapper(
             llm_provider, **self.model_params
         )
+        if self.tools:
+            try:
+                self.llm.llm = self.llm.llm.bind_tools(self.tools)
+            except Exception as exc:  # pragma: no cover
+                logger.warning("Could not bind tools to LLM: %s", exc)
+
         self.message_converter = DialogueConverter()
         system_msg = ("system", self.system_prompt)
         self.chat_history = [system_msg]
@@ -63,13 +77,59 @@ class Participant(ABC):
     def _update_chat_history(self, messages):
         self.chat_history.extend(messages)
 
+    def _tool_respond(self) -> str:
+        """ReAct loop: invoke LLM, execute any tool calls, repeat until final answer."""
+        from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
+
+        lc_messages = []
+        for role, content in self.chat_history:
+            if role == "system":
+                lc_messages.append(SystemMessage(content=content))
+            elif role in ("user", "human"):
+                lc_messages.append(HumanMessage(content=content))
+            elif role == "assistant":
+                lc_messages.append(AIMessage(content=content))
+
+        max_iterations = 5
+        for _ in range(max_iterations):
+            ai_msg = self.llm.llm.invoke(lc_messages)
+            lc_messages.append(ai_msg)
+
+            if not getattr(ai_msg, "tool_calls", None):
+                final_text = ai_msg.content
+                self._update_chat_history([("assistant", final_text)])
+                return final_text
+
+            for tool_call in ai_msg.tool_calls:
+                tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
+                matched = next((t for t in self.tools if t.name == tool_name), None)
+                if matched:
+                    try:
+                        tool_result = matched.run(tool_args)
+                    except Exception as exc:  # pragma: no cover
+                        tool_result = f"Tool error: {exc}"
+                else:
+                    tool_result = f"Tool '{tool_name}' not found."
+                lc_messages.append(
+                    ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
+                )
+
+        final_text = lc_messages[-1].content if lc_messages else ""
+        self._update_chat_history([("assistant", final_text)])
+        return final_text
+
     def respond(self, most_recent_chats: list[DialogueMessage]):
-        """This method  updates the chat history the ongoing dialogue."""
+        """Update chat history and generate a response, using tools if configured."""
         converted_chats = self.message_converter.convert_messages(most_recent_chats)
         self._update_chat_history(converted_chats)
-        response = self.llm.generate_text_from_messages(self.chat_history)
-        self._update_chat_history([("assistant", response)])
-        return response
+
+        if not self.tools:
+            response = self.llm.generate_text_from_messages(self.chat_history)
+            self._update_chat_history([("assistant", response)])
+            return response
+
+        return self._tool_respond()
 
 
 class Debater(Participant):
@@ -85,11 +145,14 @@ class Debater(Participant):
         stance: str,
         instruction_prompt: str = DEBATER_PROMPT,
         llm_provider: str = LLM_PROVIDER,
+        tools: list = None,
+        context: str = None,
         **model_params,
     ):
         self.stance = stance
         system_prompt = instruction_prompt.format(motion=motion, stance=stance)
-        super().__init__(name, system_prompt, "debater", llm_provider, **model_params)
+        super().__init__(name, system_prompt, "debater", llm_provider,
+                         tools=tools, context=context, **model_params)
 
 
 class Judge(Participant):
@@ -122,6 +185,7 @@ class Judge(Participant):
 class Moderator(Participant):
     """
     Moderator frames the debate, asks follow-up questions, and provides a closing summary.
+    Optional prompt overrides allow panel discussions to use facilitator-style language.
     """
 
     def __init__(
@@ -129,14 +193,22 @@ class Moderator(Participant):
         name: str,
         motion: str,
         llm_provider: str = LLM_PROVIDER,
+        opening_prompt: str = None,
+        question_prompt: str = None,
+        closing_prompt: str = None,
+        system_prompt_override: str = None,
         **model_params,
     ):
         self.motion = motion
-        system_prompt = MODERATOR_SYSTEM_PROMPT.format(motion=motion)
+        self._opening_prompt = opening_prompt
+        self._question_prompt = question_prompt
+        self._closing_prompt = closing_prompt
+        system_prompt = (system_prompt_override or MODERATOR_SYSTEM_PROMPT).format(motion=motion)
         super().__init__(name, system_prompt, "moderator", llm_provider, **model_params)
 
     def opening_statement(self) -> str:
-        prompt = MODERATOR_OPENING_PROMPT.format(motion=self.motion)
+        template = self._opening_prompt or MODERATOR_OPENING_PROMPT
+        prompt = template.format(motion=self.motion)
         self._update_chat_history([("user", prompt)])
         response = self.llm.generate_text_from_messages(self.chat_history)
         self._update_chat_history([("assistant", response)])
@@ -145,7 +217,7 @@ class Moderator(Participant):
     def generate_question(self, history: DialogueHistory) -> str:
         converted = self.message_converter.convert_messages(history.get_history())
         self._update_chat_history(converted)
-        self._update_chat_history([("user", MODERATOR_QUESTION_PROMPT)])
+        self._update_chat_history([("user", self._question_prompt or MODERATOR_QUESTION_PROMPT)])
         response = self.llm.generate_text_from_messages(self.chat_history)
         self._update_chat_history([("assistant", response)])
         return response
@@ -153,7 +225,7 @@ class Moderator(Participant):
     def closing_statement(self, history: DialogueHistory) -> str:
         converted = self.message_converter.convert_messages(history.get_history())
         self._update_chat_history(converted)
-        self._update_chat_history([("user", MODERATOR_CLOSING_PROMPT)])
+        self._update_chat_history([("user", self._closing_prompt or MODERATOR_CLOSING_PROMPT)])
         response = self.llm.generate_text_from_messages(self.chat_history)
         self._update_chat_history([("assistant", response)])
         return response
@@ -224,8 +296,8 @@ class BullshitDetector(Judge):
 
 class ToolEnabledDebater(Debater):
     """
-    A Debater that can use LangChain tools (e.g. Wikipedia, DuckDuckGo) to support arguments.
-    Uses a ReAct-style agent loop via langchain.
+    A Debater that uses LangChain tools (e.g. Wikipedia, DuckDuckGo) to support arguments.
+    The ReAct search loop is handled by the Participant base class.
     """
 
     def __init__(
@@ -238,76 +310,18 @@ class ToolEnabledDebater(Debater):
         tools: list = None,
         **model_params,
     ):
-        super().__init__(name, motion, stance, instruction_prompt, llm_provider, **model_params)
         if tools is None:
             from autodebater.tools import get_default_tools
             tools = get_default_tools()
-        self.tools = tools
-        if self.tools:
-            try:
-                self.llm.llm = self.llm.llm.bind_tools(self.tools)
-            except Exception as exc:  # pragma: no cover
-                logger.warning("Could not bind tools to LLM: %s", exc)
-
-    def respond(self, most_recent_chats: list):
-        """Respond using a tool-augmented ReAct loop."""
-        converted_chats = self.message_converter.convert_messages(most_recent_chats)
-        self._update_chat_history(converted_chats)
-
-        if not self.tools:
-            response = self.llm.generate_text_from_messages(self.chat_history)
-            self._update_chat_history([("assistant", response)])
-            return response
-
-        from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
-
-        # Build langchain messages from chat history tuples
-        lc_messages = []
-        for role, content in self.chat_history:
-            if role == "system":
-                lc_messages.append(SystemMessage(content=content))
-            elif role in ("user", "human"):
-                lc_messages.append(HumanMessage(content=content))
-            elif role == "assistant":
-                lc_messages.append(AIMessage(content=content))
-
-        max_iterations = 5
-        for _ in range(max_iterations):
-            ai_msg = self.llm.llm.invoke(lc_messages)
-            lc_messages.append(ai_msg)
-
-            if not getattr(ai_msg, "tool_calls", None):
-                # Final answer
-                final_text = ai_msg.content
-                self._update_chat_history([("assistant", final_text)])
-                return final_text
-
-            # Execute tool calls
-            for tool_call in ai_msg.tool_calls:
-                tool_name = tool_call["name"]
-                tool_args = tool_call["args"]
-                matched = next((t for t in self.tools if t.name == tool_name), None)
-                if matched:
-                    try:
-                        tool_result = matched.run(tool_args)
-                    except Exception as exc:  # pragma: no cover
-                        tool_result = f"Tool error: {exc}"
-                else:
-                    tool_result = f"Tool '{tool_name}' not found."
-                lc_messages.append(
-                    ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
-                )
-
-        # Fallback: return the last AI content
-        final_text = lc_messages[-1].content if lc_messages else ""
-        self._update_chat_history([("assistant", final_text)])
-        return final_text
+        super().__init__(name, motion, stance, instruction_prompt, llm_provider,
+                         tools=tools, **model_params)
 
 
 class PanelParticipant(Participant):
     """
     Expert panel participant with a specific domain lens.
     Has no stance — goal is to contribute domain expertise toward a nuanced synthesis.
+    Uses web search tools by default to back contributions with current evidence.
     """
 
     def __init__(
@@ -316,8 +330,15 @@ class PanelParticipant(Participant):
         motion: str,
         domain: str,
         llm_provider: str = LLM_PROVIDER,
+        use_tools: bool = True,
+        context: str = None,
         **model_params,
     ):
         self.domain = domain
         system_prompt = PANEL_PARTICIPANT_PROMPT.format(motion=motion, domain=domain)
-        super().__init__(name, system_prompt, "panelist", llm_provider, **model_params)
+        tools = []
+        if use_tools:
+            from autodebater.tools import get_default_tools
+            tools = get_default_tools()
+        super().__init__(name, system_prompt, "panelist", llm_provider,
+                         tools=tools, context=context, **model_params)

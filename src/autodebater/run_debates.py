@@ -2,7 +2,7 @@
 CLI entry point for debates
 """
 
-import json
+from pathlib import Path
 from typing import List, Optional
 
 import typer
@@ -15,6 +15,7 @@ from autodebater.debate_runners import (BasicJudgedDebateRunner, BasicSimpleDeba
                                         ExpertPanelRunner, RunnerConfig)
 from autodebater.dialogue import DialogueMessage
 from autodebater.persistence import DebateExporter
+from autodebater.profile import ProfileStore
 
 app = typer.Typer()
 
@@ -23,6 +24,15 @@ def msg2table(msg: DialogueMessage):
     table = Table("name", "role", "message")
     table.add_row(msg.name, msg.role, msg.message)
     return table
+
+
+def _load_context(context_file: Optional[str], no_profile: bool) -> Optional[str]:
+    """Return context text from --context-file, or auto-load profile, or None."""
+    if context_file:
+        return Path(context_file).read_text(encoding="utf-8").strip()
+    if not no_profile:
+        return ProfileStore().load()
+    return None
 
 
 @app.command()
@@ -37,9 +47,11 @@ def judged_debate(
     save: bool = typer.Option(False, "--save/--no-save", help="Persist debate to SQLite"),
     output_file: Optional[str] = typer.Option(None, "--output-file", help="Export debate to file (json or md)"),
     use_tools: bool = typer.Option(False, "--use-tools/--no-use-tools", help="Enable LangChain tool use for debaters"),
+    context_file: Optional[str] = typer.Option(None, "--context-file", help="Path to a text/markdown file injected as context"),
+    no_profile: bool = typer.Option(False, "--no-profile", help="Skip auto-loading the persistent profile"),
 ):
     """Start a new judged debate with the given motion and epochs."""
-    runner_kwargs = {}
+    runner_kwargs = {"context": _load_context(context_file, no_profile)}
     if debater_prompt:
         runner_kwargs["debater_prompt"] = debater_prompt
     if judge_prompt:
@@ -97,9 +109,11 @@ def simple_debate(
     save: bool = typer.Option(False, "--save/--no-save", help="Persist debate to SQLite"),
     output_file: Optional[str] = typer.Option(None, "--output-file", help="Export debate to file (json or md)"),
     use_tools: bool = typer.Option(False, "--use-tools/--no-use-tools", help="Enable LangChain tool use for debaters"),
+    context_file: Optional[str] = typer.Option(None, "--context-file", help="Path to a text/markdown file injected as context"),
+    no_profile: bool = typer.Option(False, "--no-profile", help="Skip auto-loading the persistent profile"),
 ):
     """Start a new simple debate with the given motion and epochs."""
-    runner_kwargs = {}
+    runner_kwargs = {"context": _load_context(context_file, no_profile)}
     if debater_prompt:
         runner_kwargs["debater_prompt"] = debater_prompt
     if model:
@@ -141,12 +155,18 @@ def panel_debate(
     domains: Optional[List[str]] = typer.Option(None, "--domain", help="Domain to include (repeat for multiple)"),
     save: bool = typer.Option(False, "--save/--no-save"),
     output_file: Optional[str] = typer.Option(None, "--output-file"),
+    use_tools: bool = typer.Option(True, "--use-tools/--no-use-tools",
+                                   help="Enable web search tools for participants (default: on)"),
+    context_file: Optional[str] = typer.Option(None, "--context-file", help="Path to a text/markdown file injected as context"),
+    no_profile: bool = typer.Option(False, "--no-profile", help="Skip auto-loading the persistent profile"),
 ):
     """Start an expert panel discussion aimed at finding a nuanced answer."""
     config = RunnerConfig(
         motion=motion, epochs=epochs, llm=llm,
         model=model, temperature=temperature,
         domains=domains or None,
+        use_tools=use_tools,
+        context=_load_context(context_file, no_profile),
     )
     runner = ExpertPanelRunner(config)
     typer.echo(f"Starting expert panel on: {motion}")

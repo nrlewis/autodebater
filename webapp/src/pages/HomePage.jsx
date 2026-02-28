@@ -5,7 +5,7 @@ import { createDebate } from "../api.js";
 const MODES = [
   { value: "judged", label: "Judged Debate" },
   { value: "simple", label: "Simple Debate" },
-  { value: "panel", label: "Expert Panel" },
+  { value: "panel", label: "Panel Discussion" },
 ];
 
 const LLM_PROVIDERS = [
@@ -23,7 +23,7 @@ export default function HomePage() {
   const [form, setForm] = useState({
     motion: "",
     mode: "judged",
-    llm: "openai",
+    llm: "anthropic",
     epochs: 2,
     model: "",
     temperature: "",

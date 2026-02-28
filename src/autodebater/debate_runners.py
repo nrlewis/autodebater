@@ -7,7 +7,9 @@ from dataclasses import dataclass, field
 from typing import Any, Generator, List, Optional
 
 from autodebater.debate import ExpertPanelDebate, JudgedDebate, SimpleDebate
-from autodebater.defaults import PANEL_JUDGE_PROMPT
+from autodebater.defaults import (PANEL_JUDGE_PROMPT, PANEL_MODERATOR_SYSTEM_PROMPT,
+                                   PANEL_MODERATOR_OPENING_PROMPT, PANEL_MODERATOR_QUESTION_PROMPT,
+                                   PANEL_MODERATOR_CLOSING_PROMPT)
 from autodebater.dialogue import DialogueMessage
 from autodebater.names import generate_name
 from autodebater.participants import (BullshitDetector, Debater, DynamicExpertJudge,
@@ -26,6 +28,7 @@ class RunnerConfig:
     temperature: Optional[float] = None
     use_tools: bool = False
     domains: Optional[List[str]] = None  # expert panel only
+    context: Optional[str] = None        # injected into every participant's system prompt
 
     def model_params(self) -> dict:
         params = {}
@@ -64,6 +67,7 @@ class BasicJudgedDebateRunner(DebateRunner):
             model=kwargs.get("model"),
             temperature=kwargs.get("temperature"),
             use_tools=kwargs.get("use_tools", False),
+            context=kwargs.get("context"),
         )
         self._build(config)
 
@@ -76,13 +80,16 @@ class BasicJudgedDebateRunner(DebateRunner):
     def _build(self, config: RunnerConfig):
         self.debate = JudgedDebate(motion=config.motion, epochs=config.epochs)
         mp = config.model_params()
+        ctx = config.context
 
         used_names: set = set()
         name1 = generate_name(used_names); used_names.add(name1)
         name2 = generate_name(used_names); used_names.add(name2)
 
-        d1_kw = {"name": name1, "motion": config.motion, "stance": "for", "llm_provider": config.llm}
-        d2_kw = {"name": name2, "motion": config.motion, "stance": "against", "llm_provider": config.llm}
+        d1_kw = {"name": name1, "motion": config.motion, "stance": "for",
+                 "llm_provider": config.llm, "context": ctx}
+        d2_kw = {"name": name2, "motion": config.motion, "stance": "against",
+                 "llm_provider": config.llm, "context": ctx}
         if config.debater_prompt:
             d1_kw["instruction_prompt"] = config.debater_prompt
             d2_kw["instruction_prompt"] = config.debater_prompt
@@ -103,7 +110,8 @@ class BasicJudgedDebateRunner(DebateRunner):
         self.debate.add_judge(BullshitDetector(**bd_kw))
 
         mod_name = generate_name(used_names)
-        self.debate.add_moderator(Moderator(name=mod_name, motion=config.motion, llm_provider=config.llm, **mp))
+        self.debate.add_moderator(Moderator(name=mod_name, motion=config.motion,
+                                            llm_provider=config.llm, **mp))
 
     def run_debate(self):
         for msg in self.debate.debate():
@@ -130,6 +138,7 @@ class BasicSimpleDebateRunner(DebateRunner):
             model=kwargs.get("model"),
             temperature=kwargs.get("temperature"),
             use_tools=kwargs.get("use_tools", False),
+            context=kwargs.get("context"),
         )
         self._build(config)
 
@@ -142,13 +151,16 @@ class BasicSimpleDebateRunner(DebateRunner):
     def _build(self, config: RunnerConfig):
         self.debate = SimpleDebate(motion=config.motion, epochs=config.epochs)
         mp = config.model_params()
+        ctx = config.context
 
         used_names: set = set()
         name1 = generate_name(used_names); used_names.add(name1)
         name2 = generate_name(used_names)
 
-        d1_kw = {"name": name1, "motion": config.motion, "stance": "for", "llm_provider": config.llm}
-        d2_kw = {"name": name2, "motion": config.motion, "stance": "against", "llm_provider": config.llm}
+        d1_kw = {"name": name1, "motion": config.motion, "stance": "for",
+                 "llm_provider": config.llm, "context": ctx}
+        d2_kw = {"name": name2, "motion": config.motion, "stance": "against",
+                 "llm_provider": config.llm, "context": ctx}
         if config.debater_prompt:
             d1_kw["instruction_prompt"] = config.debater_prompt
             d2_kw["instruction_prompt"] = config.debater_prompt
@@ -170,13 +182,18 @@ class ExpertPanelRunner(DebateRunner):
         domains = domains or config.domains or DEFAULT_PANEL_DOMAINS
         self.debate = ExpertPanelDebate(motion=config.motion, epochs=config.epochs)
         mp = config.model_params()
+        ctx = config.context
+
+        # use_tools defaults to True for panel if not explicitly set
+        use_tools = config.use_tools if config.use_tools is not None else True
 
         used_names: set = set()
         for domain in domains:
             name = generate_name(used_names); used_names.add(name)
             self.debate.add_debaters(
                 PanelParticipant(name=name, motion=config.motion, domain=domain,
-                                 llm_provider=config.llm, **mp)
+                                 llm_provider=config.llm, use_tools=use_tools,
+                                 context=ctx, **mp)
             )
 
         judge_name = generate_name(used_names); used_names.add(judge_name)
@@ -187,7 +204,16 @@ class ExpertPanelRunner(DebateRunner):
 
         mod_name = generate_name(used_names)
         self.debate.add_moderator(
-            Moderator(name=mod_name, motion=config.motion, llm_provider=config.llm, **mp)
+            Moderator(
+                name=mod_name,
+                motion=config.motion,
+                llm_provider=config.llm,
+                system_prompt_override=PANEL_MODERATOR_SYSTEM_PROMPT,
+                opening_prompt=PANEL_MODERATOR_OPENING_PROMPT,
+                question_prompt=PANEL_MODERATOR_QUESTION_PROMPT,
+                closing_prompt=PANEL_MODERATOR_CLOSING_PROMPT,
+                **mp,
+            )
         )
 
     def run_debate(self):

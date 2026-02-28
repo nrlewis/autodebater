@@ -52,7 +52,9 @@ export default function HistoryPage() {
             to={`/debate/${d.debate_id}`}
             className="history-item"
           >
-            <span className="badge">{d.mode || "debate"}</span>
+            <span className="badge">
+              {d.mode === "panel" ? "discussion" : (d.mode || "debate")}
+            </span>
             <span className="history-motion">{d.motion}</span>
             {d.created_at && (
               <span className="history-date">

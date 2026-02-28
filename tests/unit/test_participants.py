@@ -21,7 +21,7 @@ def test_participant_initialization(mock_llm_wrapper_factory):
     llm_provider = "openai"
     model_params = {"model": "gpt-4o", "param2": "value2"}
 
-    debater = Debater(name, role_prompt, llm_provider, **model_params)
+    debater = Debater(name, role_prompt, "for", llm_provider=llm_provider, **model_params)
 
     # Verify that the LLMWrapperFactory.create_llm_wrapper was called correctly
     mock_llm_wrapper_factory.assert_called_once_with(
@@ -43,7 +43,7 @@ def test_debater_respond(mock_llm_wrapper_factory):  # pylint: disable=unused-ar
     llm_provider = "openai"
     model_params = {"model": "gpt-4o", "param2": "value2"}
 
-    debater = Debater(name, role_prompt, llm_provider, **model_params)
+    debater = Debater(name, role_prompt, "for", llm_provider=llm_provider, **model_params)
 
     # Define the most recent chats
     most_recent_chats = [
