@@ -2,6 +2,9 @@
 CLI entry point for debates
 """
 
+import json
+from typing import Optional
+
 import typer
 from rich.console import Console
 from rich.live import Live
@@ -10,6 +13,7 @@ from rich.table import Table
 
 from autodebater.debate_runners import BasicJudgedDebateRunner, BasicSimpleDebateRunner
 from autodebater.dialogue import DialogueMessage
+from autodebater.persistence import DebateExporter
 
 app = typer.Typer()
 
@@ -21,9 +25,32 @@ def msg2table(msg: DialogueMessage):
 
 
 @app.command()
-def judged_debate(motion: str, epochs: int = 2, llm: str = "openai"):
-    """Start a new debate with the given motion and epochs."""
-    debate_runner = BasicJudgedDebateRunner(motion=motion, epochs=epochs, llm=llm)
+def judged_debate(
+    motion: str,
+    epochs: int = 2,
+    llm: str = "openai",
+    debater_prompt: Optional[str] = typer.Option(None, "--debater-prompt", help="Override debater system prompt"),
+    judge_prompt: Optional[str] = typer.Option(None, "--judge-prompt", help="Override judge system prompt"),
+    model: Optional[str] = typer.Option(None, "--model", help="Override the model name"),
+    temperature: Optional[float] = typer.Option(None, "--temperature", help="Override the model temperature"),
+    save: bool = typer.Option(False, "--save/--no-save", help="Persist debate to SQLite"),
+    output_file: Optional[str] = typer.Option(None, "--output-file", help="Export debate to file (json or md)"),
+    use_tools: bool = typer.Option(False, "--use-tools/--no-use-tools", help="Enable LangChain tool use for debaters"),
+):
+    """Start a new judged debate with the given motion and epochs."""
+    runner_kwargs = {}
+    if debater_prompt:
+        runner_kwargs["debater_prompt"] = debater_prompt
+    if judge_prompt:
+        runner_kwargs["judge_prompt"] = judge_prompt
+    if model:
+        runner_kwargs["model"] = model
+    if temperature is not None:
+        runner_kwargs["temperature"] = temperature
+    if use_tools:
+        runner_kwargs["use_tools"] = True
+
+    debate_runner = BasicJudgedDebateRunner(motion=motion, epochs=epochs, llm=llm, **runner_kwargs)
 
     typer.echo(f"Starting debate on: {motion}")
 
@@ -45,11 +72,43 @@ def judged_debate(motion: str, epochs: int = 2, llm: str = "openai"):
             table.add_row(msg[0], str(msg[1]), Markdown(msg[2]))
             live.update(table, refresh=True)
 
+    history = debate_runner.debate.dialogue_history
+    if save:
+        from autodebater.persistence import DebateStore
+        store = DebateStore()
+        store.save(history, motion)
+        typer.echo(f"Debate saved (id={debate_runner.debate.debate_id})")
+
+    if output_file:
+        fmt = "md" if output_file.endswith(".md") else "json"
+        DebateExporter.export_file(history, output_file, fmt)
+        typer.echo(f"Debate exported to {output_file}")
+
 
 @app.command()
-def simple_debate(motion: str, epochs: int = 2, llm: str = "openai"):
-    """Start a new debate with the given motion and epochs."""
-    debate_runner = BasicSimpleDebateRunner(motion=motion, epochs=epochs, llm=llm)
+def simple_debate(
+    motion: str,
+    epochs: int = 2,
+    llm: str = "openai",
+    debater_prompt: Optional[str] = typer.Option(None, "--debater-prompt", help="Override debater system prompt"),
+    model: Optional[str] = typer.Option(None, "--model", help="Override the model name"),
+    temperature: Optional[float] = typer.Option(None, "--temperature", help="Override the model temperature"),
+    save: bool = typer.Option(False, "--save/--no-save", help="Persist debate to SQLite"),
+    output_file: Optional[str] = typer.Option(None, "--output-file", help="Export debate to file (json or md)"),
+    use_tools: bool = typer.Option(False, "--use-tools/--no-use-tools", help="Enable LangChain tool use for debaters"),
+):
+    """Start a new simple debate with the given motion and epochs."""
+    runner_kwargs = {}
+    if debater_prompt:
+        runner_kwargs["debater_prompt"] = debater_prompt
+    if model:
+        runner_kwargs["model"] = model
+    if temperature is not None:
+        runner_kwargs["temperature"] = temperature
+    if use_tools:
+        runner_kwargs["use_tools"] = True
+
+    debate_runner = BasicSimpleDebateRunner(motion=motion, epochs=epochs, llm=llm, **runner_kwargs)
 
     typer.echo(f"Starting debate on: {motion}")
     console = Console()
@@ -57,6 +116,18 @@ def simple_debate(motion: str, epochs: int = 2, llm: str = "openai"):
     for msg in debate_runner.run_debate():
         table = msg2table(msg)
         console.print(table)
+
+    history = debate_runner.debate.dialogue_history
+    if save:
+        from autodebater.persistence import DebateStore
+        store = DebateStore()
+        store.save(history, motion)
+        typer.echo(f"Debate saved (id={debate_runner.debate.debate_id})")
+
+    if output_file:
+        fmt = "md" if output_file.endswith(".md") else "json"
+        DebateExporter.export_file(history, output_file, fmt)
+        typer.echo(f"Debate exported to {output_file}")
 
 
 if __name__ == "__main__":

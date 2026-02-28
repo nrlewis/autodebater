@@ -2,11 +2,13 @@
 Test module for the participants module.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from autodebater.defaults import EXPERT_JUDGE_PROMPT, LLM_PROVIDER
 from autodebater.dialogue import DialogueMessage
-from autodebater.participants import Debater, Judge
+from autodebater.participants import Debater, DynamicExpertJudge, Judge, Moderator
 
 
 def test_participant_initialization(mock_llm_wrapper_factory):
@@ -132,6 +134,41 @@ def test_judge_summarize(judge_mock_llm_wrapper_factory):
         + "well-structured and supported by evidence."
     )
     judge_mock_llm_wrapper_factory.return_value.generate_text_from_messages.assert_called_once()  # pylint: disable=line-too-long
+
+
+def test_dynamic_expert_judge_discovers_expertise(mocker):
+    """DynamicExpertJudge makes an expertise-discovery call on init."""
+    mock_llm = MagicMock()
+    # First call: expertise discovery; second call onwards: judging
+    mock_llm.generate_text_from_messages.side_effect = [
+        "machine learning and AI ethics",
+        "70 Strong argument for the motion.",
+    ]
+    mocker.patch(
+        "autodebater.participants.LLMWrapperFactory.create_llm_wrapper",
+        return_value=mock_llm,
+    )
+
+    motion = "AI will surpass human intelligence"
+    judge = DynamicExpertJudge(name="ExpertJudge", motion=motion, llm_provider="openai")
+
+    assert judge.expertise == "machine learning and AI ethics"
+    assert "machine learning and AI ethics" in judge.system_prompt
+
+
+def test_moderator_opening(mocker):
+    """Moderator.opening_statement calls LLM and returns the text."""
+    mock_llm = MagicMock()
+    mock_llm.generate_text_from_messages.return_value = "Welcome to this debate."
+    mocker.patch(
+        "autodebater.participants.LLMWrapperFactory.create_llm_wrapper",
+        return_value=mock_llm,
+    )
+    from autodebater.dialogue import DialogueHistory
+    motion = "AI will surpass human intelligence"
+    mod = Moderator(name="Mod", motion=motion, llm_provider="openai")
+    result = mod.opening_statement()
+    assert result == "Welcome to this debate."
 
 
 if __name__ == "__main__":

@@ -20,9 +20,11 @@ import logging
 from abc import ABC
 
 from autodebater.defaults import (BULLSHIT_DETECTOR_PROMPT, DEBATER_PROMPT,
-                                  EXPERT_JUDGE_PROMPT, JUDGE_SUMMARY,
-                                  LLM_PROVIDER)
-from autodebater.dialogue import DialogueConverter, DialogueMessage
+                                  DYNAMIC_EXPERT_JUDGE_PROMPT, EXPERT_JUDGE_PROMPT,
+                                  JUDGE_SUMMARY, LLM_PROVIDER,
+                                  MODERATOR_CLOSING_PROMPT, MODERATOR_OPENING_PROMPT,
+                                  MODERATOR_QUESTION_PROMPT, MODERATOR_SYSTEM_PROMPT)
+from autodebater.dialogue import DialogueConverter, DialogueHistory, DialogueMessage
 from autodebater.llm import LLMWrapperFactory
 
 logger = logging.getLogger(__name__)
@@ -116,6 +118,79 @@ class Judge(Participant):
         return response
 
 
+class Moderator(Participant):
+    """
+    Moderator frames the debate, asks follow-up questions, and provides a closing summary.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        motion: str,
+        llm_provider: str = LLM_PROVIDER,
+        **model_params,
+    ):
+        self.motion = motion
+        system_prompt = MODERATOR_SYSTEM_PROMPT.format(motion=motion)
+        super().__init__(name, system_prompt, "moderator", llm_provider, **model_params)
+
+    def opening_statement(self) -> str:
+        prompt = MODERATOR_OPENING_PROMPT.format(motion=self.motion)
+        self._update_chat_history([("user", prompt)])
+        response = self.llm.generate_text_from_messages(self.chat_history)
+        self._update_chat_history([("assistant", response)])
+        return response
+
+    def generate_question(self, history: DialogueHistory) -> str:
+        converted = self.message_converter.convert_messages(history.get_history())
+        self._update_chat_history(converted)
+        self._update_chat_history([("user", MODERATOR_QUESTION_PROMPT)])
+        response = self.llm.generate_text_from_messages(self.chat_history)
+        self._update_chat_history([("assistant", response)])
+        return response
+
+    def closing_statement(self, history: DialogueHistory) -> str:
+        converted = self.message_converter.convert_messages(history.get_history())
+        self._update_chat_history(converted)
+        self._update_chat_history([("user", MODERATOR_CLOSING_PROMPT)])
+        response = self.llm.generate_text_from_messages(self.chat_history)
+        self._update_chat_history([("assistant", response)])
+        return response
+
+
+class DynamicExpertJudge(Judge):
+    """
+    A Judge that auto-discovers its domain of expertise for the motion before judging.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        motion: str,
+        llm_provider: str = LLM_PROVIDER,
+        **model_params,
+    ):
+        # Temporarily create a bare LLM to discover expertise
+        from autodebater.llm import LLMWrapperFactory as _Factory  # avoid circular at module level
+        temp_llm = _Factory.create_llm_wrapper(llm_provider, **model_params)
+        expertise_prompt = [
+            ("system", "You are a domain expert."),
+            (
+                "user",
+                f"What is your primary domain of expertise most relevant to the motion: '{motion}'? "
+                "Answer in one short phrase (e.g. 'machine learning and AI ethics').",
+            ),
+        ]
+        self.expertise = temp_llm.generate_text_from_messages(expertise_prompt).strip()
+        logger.info("DynamicExpertJudge '%s' expertise: %s", name, self.expertise)
+
+        instruction_prompt = DYNAMIC_EXPERT_JUDGE_PROMPT.format(
+            motion=motion, expertise=self.expertise
+        )
+        super().__init__(name, motion, instruction_prompt=instruction_prompt,
+                         llm_provider=llm_provider, **model_params)
+
+
 class BullshitDetector(Judge):
     """
     Specific type of judge encapsulated in a class
@@ -132,3 +207,85 @@ class BullshitDetector(Judge):
         **model_params,
     ):
         super().__init__(name, motion, instruction_prompt, llm_provider, **model_params)
+
+
+class ToolEnabledDebater(Debater):
+    """
+    A Debater that can use LangChain tools (e.g. Wikipedia, DuckDuckGo) to support arguments.
+    Uses a ReAct-style agent loop via langchain.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        motion: str,
+        stance: str,
+        instruction_prompt: str = DEBATER_PROMPT,
+        llm_provider: str = LLM_PROVIDER,
+        tools: list = None,
+        **model_params,
+    ):
+        super().__init__(name, motion, stance, instruction_prompt, llm_provider, **model_params)
+        if tools is None:
+            from autodebater.tools import get_default_tools
+            tools = get_default_tools()
+        self.tools = tools
+        if self.tools:
+            try:
+                self.llm.llm = self.llm.llm.bind_tools(self.tools)
+            except Exception as exc:  # pragma: no cover
+                logger.warning("Could not bind tools to LLM: %s", exc)
+
+    def respond(self, most_recent_chats: list):
+        """Respond using a tool-augmented ReAct loop."""
+        converted_chats = self.message_converter.convert_messages(most_recent_chats)
+        self._update_chat_history(converted_chats)
+
+        if not self.tools:
+            response = self.llm.generate_text_from_messages(self.chat_history)
+            self._update_chat_history([("assistant", response)])
+            return response
+
+        from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
+
+        # Build langchain messages from chat history tuples
+        lc_messages = []
+        for role, content in self.chat_history:
+            if role == "system":
+                lc_messages.append(SystemMessage(content=content))
+            elif role in ("user", "human"):
+                lc_messages.append(HumanMessage(content=content))
+            elif role == "assistant":
+                lc_messages.append(AIMessage(content=content))
+
+        max_iterations = 5
+        for _ in range(max_iterations):
+            ai_msg = self.llm.llm.invoke(lc_messages)
+            lc_messages.append(ai_msg)
+
+            if not getattr(ai_msg, "tool_calls", None):
+                # Final answer
+                final_text = ai_msg.content
+                self._update_chat_history([("assistant", final_text)])
+                return final_text
+
+            # Execute tool calls
+            for tool_call in ai_msg.tool_calls:
+                tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
+                matched = next((t for t in self.tools if t.name == tool_name), None)
+                if matched:
+                    try:
+                        tool_result = matched.run(tool_args)
+                    except Exception as exc:  # pragma: no cover
+                        tool_result = f"Tool error: {exc}"
+                else:
+                    tool_result = f"Tool '{tool_name}' not found."
+                lc_messages.append(
+                    ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
+                )
+
+        # Fallback: return the last AI content
+        final_text = lc_messages[-1].content if lc_messages else ""
+        self._update_chat_history([("assistant", final_text)])
+        return final_text

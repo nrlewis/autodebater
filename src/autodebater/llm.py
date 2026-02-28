@@ -10,10 +10,10 @@ import os
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
-# from langchain_anthropic import ChatAnthropic
+from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
-from autodebater.defaults import OPENAI_MODEL_PARAMS
+from autodebater.defaults import ANTHROPIC_MODEL_PARAMS, OPENAI_MODEL_PARAMS
 
 logger = logging.getLogger(__name__)
 
@@ -100,10 +100,39 @@ class AzureOpenAILLMWrapper(LLMWrapper):
         return ai_msg.content
 
 
+class AnthropicLLMWrapper(LLMWrapper):
+    """
+    Anthropic LLM Wrapper
+    Uses langchain-anthropic for extendability
+    """
+
+    def __init__(self, **model_params):
+
+        self.model_params = model_params
+        if len(self.model_params) == 0:
+            self.model_params = ANTHROPIC_MODEL_PARAMS
+            logger.info("Setting Anthropic model params to %s", self.model_params)
+
+        if os.getenv("ANTHROPIC_API_KEY", None) is None:
+            raise ValueError("ANTHROPIC_API_KEY is not set")
+
+        self.llm = ChatAnthropic(**self.model_params)
+        super().__init__()
+
+    def generate_text_from_messages(self, messages: List[Tuple[str, str]]) -> str:
+
+        ai_msg = self.llm.invoke(messages)
+        return ai_msg.content
+
+
 class LLMWrapperFactory:
     """LLM Wrapper Factory Design"""
 
-    llms = {"openai": OpenAILLMWrapper, "azure": AzureOpenAILLMWrapper}
+    llms = {
+        "openai": OpenAILLMWrapper,
+        "azure": AzureOpenAILLMWrapper,
+        "anthropic": AnthropicLLMWrapper,
+    }
 
     @staticmethod
     def create_llm_wrapper(llm_type: str, **model_params):

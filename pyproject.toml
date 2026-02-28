@@ -8,7 +8,11 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-langchain-openai = "^0.1.8"
+langchain-openai = "^0.3"
+langchain-anthropic = "^0.3"
+langchain-community = "^0.3"
+wikipedia = "^1.4"
+duckduckgo-search = "^6.0"
 typer = "^0.12.3"
 pyyaml = "^6.0.1"
 

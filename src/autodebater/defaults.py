@@ -17,6 +17,7 @@ defaults = safe_load(open(DEFAULTS_PATH, encoding="utf-8").read())
 LLM_PROVIDER = defaults["llm_provider"]
 OPENAI_MODEL_PARAMS = defaults["openai_model_params"]
 AZURE_OPENAI_MODEL_PARAMS = defaults["azure_openai_model_params"]
+ANTHROPIC_MODEL_PARAMS = defaults["anthropic_model_params"]
 SYSTEM_PROMPTS = defaults["system_prompts"]
 
 # Optional: Define specific prompts for convenience
@@ -28,3 +29,9 @@ EXPERT_JUDGE_PROMPT = SYSTEM_PROMPTS["expert_judge"] + "\n" + JUDGE_INSTRUCTION
 BULLSHIT_DETECTOR_PROMPT = (
     SYSTEM_PROMPTS["bullshit_detector"] + "\n" + JUDGE_INSTRUCTION
 )
+
+MODERATOR_SYSTEM_PROMPT = SYSTEM_PROMPTS["moderator_system"]
+MODERATOR_OPENING_PROMPT = SYSTEM_PROMPTS["moderator_opening"]
+MODERATOR_QUESTION_PROMPT = SYSTEM_PROMPTS["moderator_question"]
+MODERATOR_CLOSING_PROMPT = SYSTEM_PROMPTS["moderator_closing"]
+DYNAMIC_EXPERT_JUDGE_PROMPT = SYSTEM_PROMPTS["dynamic_expert_judge"] + "\n" + JUDGE_INSTRUCTION

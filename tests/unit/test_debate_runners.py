@@ -12,12 +12,12 @@ from autodebater.participants import Judge
 class TestBasicJudgedDebateRunner(unittest.TestCase):
     """patch and mock the Basic Judged Debate Runners"""
 
-    @patch("autodebater.debate.JudgedDebate")
-    @patch("autodebater.participants.Debater")
-    @patch("autodebater.participants.Judge")
-    @patch("autodebater.participants.BullshitDetector")
+    @patch("autodebater.debate_runners.Moderator")
+    @patch("autodebater.debate_runners.DynamicExpertJudge")
+    @patch("autodebater.debate_runners.BullshitDetector")
+    @patch("autodebater.debate_runners.Debater")
     def test_initialization(
-        self, mock_bullshit_detector, mock_judge, mock_debater, mock_judged_debate
+        self, mock_debater, mock_bd, mock_dej, mock_mod
     ):  # pylint: disable=unused-argument
         motion = "This house believes AI will surpass human intelligence"
         runner = BasicJudgedDebateRunner(motion)
@@ -27,12 +27,12 @@ class TestBasicJudgedDebateRunner(unittest.TestCase):
         self.assertEqual(len(runner.debate.debaters), 2)
         self.assertEqual(len(runner.debate.judges), 2)
 
-    @patch("autodebater.debate.JudgedDebate")
-    @patch("autodebater.participants.Debater")
-    @patch("autodebater.participants.Judge")
-    @patch("autodebater.participants.BullshitDetector")
+    @patch("autodebater.debate_runners.Moderator")
+    @patch("autodebater.debate_runners.DynamicExpertJudge")
+    @patch("autodebater.debate_runners.BullshitDetector")
+    @patch("autodebater.debate_runners.Debater")
     def test_run_debate(
-        self, mock_bullshit_detector, mock_judge, mock_debater, mock_judged_debate
+        self, mock_debater, mock_bd, mock_dej, mock_mod
     ):  # pylint: disable=unused-argument
         motion = "This house believes AI will surpass human intelligence"
         runner = BasicJudgedDebateRunner(motion)
@@ -61,12 +61,12 @@ class TestBasicJudgedDebateRunner(unittest.TestCase):
         self.assertEqual(messages[0].message, "Please begin")
         self.assertEqual(messages[1].message, "AI will surpass human intelligence")
 
-    @patch("autodebater.debate.JudgedDebate")
-    @patch("autodebater.participants.Debater")
-    @patch("autodebater.participants.Judge")
-    @patch("autodebater.participants.BullshitDetector")
+    @patch("autodebater.debate_runners.Moderator")
+    @patch("autodebater.debate_runners.DynamicExpertJudge")
+    @patch("autodebater.debate_runners.BullshitDetector")
+    @patch("autodebater.debate_runners.Debater")
     def test_get_judgements(
-        self, mock_bullshit_detector, mock_judge, mock_debater, mock_judged_debate
+        self, mock_debater, mock_bd, mock_dej, mock_mod
     ):  # pylint: disable=unused-argument
         motion = "This house believes AI will surpass human intelligence"
         runner = BasicJudgedDebateRunner(motion)
@@ -97,10 +97,9 @@ class TestBasicJudgedDebateRunner(unittest.TestCase):
 class TestBasicSimpleDebateRunner(unittest.TestCase):
     """patch and mock a Simple Debate Runner for unit testing"""
 
-    @patch("autodebater.debate.SimpleDebate")
-    @patch("autodebater.participants.Debater")
+    @patch("autodebater.debate_runners.Debater")
     def test_initialization(
-        self, mock_debater, mock_simple_debate
+        self, mock_debater
     ):  # pylint: disable=unused-argument
         motion = "This house believes AI will surpass human intelligence"
         runner = BasicSimpleDebateRunner(motion)
@@ -109,10 +108,9 @@ class TestBasicSimpleDebateRunner(unittest.TestCase):
         self.assertEqual(runner.debate.epochs, 2)
         self.assertEqual(len(runner.debate.debaters), 2)
 
-    @patch("autodebater.debate.SimpleDebate")
-    @patch("autodebater.participants.Debater")
+    @patch("autodebater.debate_runners.Debater")
     def test_run_debate(
-        self, mock_debater, mock_simple_debate
+        self, mock_debater
     ):  # pylint: disable=unused-argument
         motion = "This house believes AI will surpass human intelligence"
         runner = BasicSimpleDebateRunner(motion)

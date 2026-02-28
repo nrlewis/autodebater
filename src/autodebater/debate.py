@@ -7,12 +7,13 @@ for a debate
 """
 
 import logging
+import re
 from abc import ABC, abstractmethod
 from typing import Any, Generator
 
 from autodebater.dialogue import DialogueHistory, DialogueMessage
 from autodebater.errors import JudgementParseError
-from autodebater.participants import Debater, Judge
+from autodebater.participants import Debater, Judge, Moderator
 from autodebater.scoring import geometric_mean
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,7 @@ class JudgedDebate(Debate):
 
     def __init__(self, motion: str, epochs: int = 10):
         self.judges = []
+        self.moderator: Moderator = None
         self.running_score = 50
         self.scores = []
         super().__init__(motion, epochs)
@@ -79,28 +81,46 @@ class JudgedDebate(Debate):
     def add_judge(self, judge: Judge):
         self.judges.append(judge)
 
+    def add_moderator(self, moderator: Moderator):
+        self.moderator = moderator
+
     def parse_judgement(self, judgement):
-        try:
-            score, justification = judgement.split(" ", 1)
-            return float(score), justification
-        except Exception as e:
-            raise JudgementParseError(f"Could not parse judgement: {e}") from e
+        match = re.match(r"^(\d+(?:\.\d+)?)\s+(.+)$", judgement.strip(), re.DOTALL)
+        if not match:
+            raise JudgementParseError(
+                f"Could not parse judgement (expected '<score> <justification>'): {judgement!r}"
+            )
+        score = float(match.group(1))
+        justification = match.group(2)
+        if not 0 <= score <= 100:
+            raise JudgementParseError(
+                f"Score {score} is out of range [0, 100]"
+            )
+        return score, justification
 
     def debate(self):
         steps = self.epochs * len(self.debaters)
 
         i = 0
-        first_debater_name = self.debaters[i].name
+        if self.moderator is not None:
+            opening_text = self.moderator.opening_statement()
+            mod_name = self.moderator.name
+        else:
+            first_debater_name = self.debaters[i].name
+            opening_text = f"{first_debater_name} - please begin"
+            mod_name = "mod"
+
         msg = DialogueMessage(
-            name="mod",
+            name=mod_name,
             role="moderator",
-            message=f"{first_debater_name} - please begin",
+            message=opening_text,
             debate_id=self.debate_id,
         )
         self.dialogue_history.add_message(msg)
         yield msg
-        while i < steps:
 
+        epoch = 0
+        while i < steps:
             speaker = self.debaters[i % len(self.debaters)]
             response = speaker.respond([msg])
             msg = DialogueMessage(
@@ -123,8 +143,25 @@ class JudgedDebate(Debate):
                     score, _ = self.parse_judgement(judgement)
                     judge_msg.judgement = score
                     self.scores.append(score)
-                except JudgementParseError as e:
-                    logger.exception(e)
+                except JudgementParseError:
+                    logger.warning(
+                        "Judge %s returned malformed output; retrying once.", judge.name
+                    )
+                    correction = DialogueMessage(
+                        "mod",
+                        "moderator",
+                        "Your response must start with a number 0-100 followed by a space and your justification.",
+                        self.debate_id,
+                    )
+                    judgement = judge.respond([correction])
+                    judge_msg.message = judgement
+                    try:
+                        score, _ = self.parse_judgement(judgement)
+                        judge_msg.judgement = score
+                        self.scores.append(score)
+                    except JudgementParseError as e:
+                        logger.exception(e)
+                        raise
 
                 self.dialogue_history.add_message(judge_msg)
                 self.running_score = geometric_mean(self.scores)
@@ -138,3 +175,29 @@ class JudgedDebate(Debate):
             )
             yield moderator_message
             i += 1
+
+            # After each full epoch (all debaters have spoken), yield moderator question
+            if self.moderator is not None and (i % len(self.debaters) == 0):
+                epoch += 1
+                if epoch < self.epochs:
+                    question_text = self.moderator.generate_question(self.dialogue_history)
+                    q_msg = DialogueMessage(
+                        name=self.moderator.name,
+                        role="moderator",
+                        message=question_text,
+                        debate_id=self.debate_id,
+                    )
+                    self.dialogue_history.add_message(q_msg)
+                    msg = q_msg
+                    yield q_msg
+
+        if self.moderator is not None:
+            closing_text = self.moderator.closing_statement(self.dialogue_history)
+            closing_msg = DialogueMessage(
+                name=self.moderator.name,
+                role="moderator",
+                message=closing_text,
+                debate_id=self.debate_id,
+            )
+            self.dialogue_history.add_message(closing_msg)
+            yield closing_msg
