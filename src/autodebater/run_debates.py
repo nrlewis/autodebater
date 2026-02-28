@@ -3,7 +3,7 @@ CLI entry point for debates
 """
 
 import json
-from typing import Optional
+from typing import List, Optional
 
 import typer
 from rich.console import Console
@@ -11,7 +11,8 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.table import Table
 
-from autodebater.debate_runners import BasicJudgedDebateRunner, BasicSimpleDebateRunner
+from autodebater.debate_runners import (BasicJudgedDebateRunner, BasicSimpleDebateRunner,
+                                        ExpertPanelRunner, RunnerConfig)
 from autodebater.dialogue import DialogueMessage
 from autodebater.persistence import DebateExporter
 
@@ -128,6 +129,52 @@ def simple_debate(
         fmt = "md" if output_file.endswith(".md") else "json"
         DebateExporter.export_file(history, output_file, fmt)
         typer.echo(f"Debate exported to {output_file}")
+
+
+@app.command()
+def panel_debate(
+    motion: str,
+    epochs: int = 3,
+    llm: str = "openai",
+    model: Optional[str] = typer.Option(None, "--model"),
+    temperature: Optional[float] = typer.Option(None, "--temperature"),
+    domains: Optional[List[str]] = typer.Option(None, "--domain", help="Domain to include (repeat for multiple)"),
+    save: bool = typer.Option(False, "--save/--no-save"),
+    output_file: Optional[str] = typer.Option(None, "--output-file"),
+):
+    """Start an expert panel discussion aimed at finding a nuanced answer."""
+    config = RunnerConfig(
+        motion=motion, epochs=epochs, llm=llm,
+        model=model, temperature=temperature,
+        domains=domains or None,
+    )
+    runner = ExpertPanelRunner(config)
+    typer.echo(f"Starting expert panel on: {motion}")
+
+    table = Table("name", "domain/role", "convergence", "message", show_lines=True)
+    with Live(table, auto_refresh=False, vertical_overflow="visible") as live:
+        for msg in runner.run_debate():
+            domain_or_role = getattr(
+                next((p for p in runner.debate.debaters if p.name == msg.name), None),
+                "domain", msg.role
+            )
+            table.add_row(
+                msg.name,
+                domain_or_role,
+                str(msg.judgement) if msg.judgement is not None else "",
+                Markdown(msg.message),
+            )
+            live.update(table, refresh=True)
+
+    history = runner.debate.dialogue_history
+    if save:
+        from autodebater.persistence import DebateStore
+        DebateStore().save(history, motion)
+        typer.echo(f"Panel saved (id={runner.debate.debate_id})")
+    if output_file:
+        fmt = "md" if output_file.endswith(".md") else "json"
+        DebateExporter.export_file(history, output_file, fmt)
+        typer.echo(f"Panel exported to {output_file}")
 
 
 if __name__ == "__main__":

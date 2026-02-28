@@ -72,3 +72,19 @@ coveralls:
 
 quick_check:
 	poetry run autodebater judged-debate "marty friedman is the greatest guitarist alive"
+
+# ── Web app ────────────────────────────────────────────────────────────────
+webapp-install: ## install React webapp dependencies
+	cd webapp && npm install
+
+webapp-dev: ## start React dev server (requires API running on :8000)
+	cd webapp && npm run dev
+
+webapp-build: ## build React webapp for production
+	cd webapp && npm run build
+
+api: ## start FastAPI server (dev mode with auto-reload)
+	poetry run uvicorn autodebater.api:app --reload --host 0.0.0.0 --port 8000
+
+serve: webapp-build ## build webapp then serve everything via FastAPI on :8000
+	poetry run uvicorn autodebater.api:app --host 0.0.0.0 --port 8000

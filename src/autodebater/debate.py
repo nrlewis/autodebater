@@ -8,12 +8,13 @@ for a debate
 
 import logging
 import re
+import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Generator
 
 from autodebater.dialogue import DialogueHistory, DialogueMessage
 from autodebater.errors import JudgementParseError
-from autodebater.participants import Debater, Judge, Moderator
+from autodebater.participants import Debater, Judge, Moderator, PanelParticipant
 from autodebater.scoring import geometric_mean
 
 logger = logging.getLogger(__name__)
@@ -28,7 +29,7 @@ class Debate(ABC):
     def __init__(self, motion: str, epochs: int = 10):
         self.debaters = []
         self.motion = motion
-        self.debate_id = str(hash(motion))
+        self.debate_id = str(uuid.uuid4())
         self.dialogue_history = DialogueHistory()
         self.epochs = epochs
 
@@ -199,5 +200,112 @@ class JudgedDebate(Debate):
                 message=closing_text,
                 debate_id=self.debate_id,
             )
+            self.dialogue_history.add_message(closing_msg)
+            yield closing_msg
+
+
+class ExpertPanelDebate(Debate):
+    """
+    Expert panel discussion: no binary stances, panelists collaborate toward a
+    nuanced, well-reasoned answer. Judges score convergence (0–100) after each
+    contribution. Requires a Moderator to open, probe, and synthesise.
+    """
+
+    def __init__(self, motion: str, epochs: int = 3):
+        self.judges = []
+        self.moderator: Moderator = None
+        self.convergence_scores = []
+        self.convergence_score = 0.0
+        super().__init__(motion, epochs)
+
+    def add_judge(self, judge: Judge):
+        self.judges.append(judge)
+
+    def add_moderator(self, moderator: Moderator):
+        self.moderator = moderator
+
+    def parse_convergence(self, response: str):
+        """Parse a convergence score + assessment from a judge response."""
+        match = re.match(r"^(\d+(?:\.\d+)?)\s+(.+)$", response.strip(), re.DOTALL)
+        if not match:
+            raise JudgementParseError(
+                f"Could not parse convergence score: {response!r}"
+            )
+        score = float(match.group(1))
+        if not 0 <= score <= 100:
+            raise JudgementParseError(f"Score {score} is out of range [0, 100]")
+        return score, match.group(2)
+
+    def debate(self):
+        steps = self.epochs * len(self.debaters)
+
+        # Opening
+        if self.moderator:
+            opening = self.moderator.opening_statement()
+            mod_name = self.moderator.name
+        else:
+            opening = f"Panel discussion on: {self.motion}. Please begin."
+            mod_name = "mod"
+
+        msg = DialogueMessage(name=mod_name, role="moderator",
+                              message=opening, debate_id=self.debate_id)
+        self.dialogue_history.add_message(msg)
+        yield msg
+
+        epoch = 0
+        i = 0
+        while i < steps:
+            panelist = self.debaters[i % len(self.debaters)]
+            response = panelist.respond([msg])
+            msg = DialogueMessage(
+                name=panelist.name, role=panelist.role,
+                message=response, debate_id=self.debate_id,
+            )
+            self.dialogue_history.add_message(msg)
+            yield msg
+
+            for judge in self.judges:
+                judgement = judge.respond([msg])
+                try:
+                    score, _ = self.parse_convergence(judgement)
+                except JudgementParseError:
+                    logger.warning("Panel judge returned malformed output; retrying.")
+                    correction = DialogueMessage(
+                        "mod", "moderator",
+                        "Your response must start with a number 0-100 followed by a space and your assessment.",
+                        self.debate_id,
+                    )
+                    judgement = judge.respond([correction])
+                    score, _ = self.parse_convergence(judgement)
+
+                judge_msg = DialogueMessage(judge.name, judge.role, judgement, self.debate_id)
+                judge_msg.judgement = score
+                self.convergence_scores.append(score)
+                self.convergence_score = geometric_mean(self.convergence_scores)
+                self.dialogue_history.add_message(judge_msg)
+                yield judge_msg
+
+            score_msg = DialogueMessage(
+                "mod", "moderator",
+                f"Convergence: {self.convergence_score:.1f}/100",
+                self.debate_id,
+            )
+            yield score_msg
+            i += 1
+
+            if self.moderator and (i % len(self.debaters) == 0):
+                epoch += 1
+                if epoch < self.epochs:
+                    question = self.moderator.generate_question(self.dialogue_history)
+                    q_msg = DialogueMessage(self.moderator.name, "moderator",
+                                            question, self.debate_id)
+                    self.dialogue_history.add_message(q_msg)
+                    msg = q_msg
+                    yield q_msg
+
+        if self.moderator:
+            closing = self.moderator.closing_statement(self.dialogue_history)
+            closing_msg = DialogueMessage(self.moderator.name, "moderator",
+                                          closing, self.debate_id)
             self.dialogue_history.add_message(closing_msg)
             yield closing_msg

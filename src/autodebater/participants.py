@@ -23,7 +23,8 @@ from autodebater.defaults import (BULLSHIT_DETECTOR_PROMPT, DEBATER_PROMPT,
                                   DYNAMIC_EXPERT_JUDGE_PROMPT, EXPERT_JUDGE_PROMPT,
                                   JUDGE_SUMMARY, LLM_PROVIDER,
                                   MODERATOR_CLOSING_PROMPT, MODERATOR_OPENING_PROMPT,
-                                  MODERATOR_QUESTION_PROMPT, MODERATOR_SYSTEM_PROMPT)
+                                  MODERATOR_QUESTION_PROMPT, MODERATOR_SYSTEM_PROMPT,
+                                  PANEL_PARTICIPANT_PROMPT)
 from autodebater.dialogue import DialogueConverter, DialogueHistory, DialogueMessage
 from autodebater.llm import LLMWrapperFactory
 
@@ -160,7 +161,8 @@ class Moderator(Participant):
 
 class DynamicExpertJudge(Judge):
     """
-    A Judge that auto-discovers its domain of expertise for the motion before judging.
+    A Judge that lazily discovers its domain of expertise on the first respond() call.
+    Construction never makes LLM calls — expertise is deferred until actually needed.
     """
 
     def __init__(
@@ -170,25 +172,36 @@ class DynamicExpertJudge(Judge):
         llm_provider: str = LLM_PROVIDER,
         **model_params,
     ):
-        # Temporarily create a bare LLM to discover expertise
-        from autodebater.llm import LLMWrapperFactory as _Factory  # avoid circular at module level
-        temp_llm = _Factory.create_llm_wrapper(llm_provider, **model_params)
+        self._expertise = None
+        self._motion = motion
+        # Start with the base expert judge prompt; upgraded after expertise discovery.
+        super().__init__(name, motion, llm_provider=llm_provider, **model_params)
+
+    def _discover_expertise(self):
         expertise_prompt = [
             ("system", "You are a domain expert."),
             (
                 "user",
-                f"What is your primary domain of expertise most relevant to the motion: '{motion}'? "
-                "Answer in one short phrase (e.g. 'machine learning and AI ethics').",
+                f"What is your primary domain of expertise most relevant to the motion: "
+                f"'{self._motion}'? Answer in one short phrase (e.g. 'machine learning and AI ethics').",
             ),
         ]
-        self.expertise = temp_llm.generate_text_from_messages(expertise_prompt).strip()
-        logger.info("DynamicExpertJudge '%s' expertise: %s", name, self.expertise)
-
-        instruction_prompt = DYNAMIC_EXPERT_JUDGE_PROMPT.format(
-            motion=motion, expertise=self.expertise
+        self._expertise = self.llm.generate_text_from_messages(expertise_prompt).strip()
+        logger.info("DynamicExpertJudge '%s' expertise: %s", self.name, self._expertise)
+        new_system = DYNAMIC_EXPERT_JUDGE_PROMPT.format(
+            motion=self._motion, expertise=self._expertise
         )
-        super().__init__(name, motion, instruction_prompt=instruction_prompt,
-                         llm_provider=llm_provider, **model_params)
+        self.chat_history[0] = ("system", new_system)
+        self.system_prompt = new_system
+
+    @property
+    def expertise(self):
+        return self._expertise
+
+    def respond(self, most_recent_chats: list):
+        if self._expertise is None:
+            self._discover_expertise()
+        return super().respond(most_recent_chats)
 
 
 class BullshitDetector(Judge):
@@ -289,3 +302,22 @@ class ToolEnabledDebater(Debater):
         final_text = lc_messages[-1].content if lc_messages else ""
         self._update_chat_history([("assistant", final_text)])
         return final_text
+
+
+class PanelParticipant(Participant):
+    """
+    Expert panel participant with a specific domain lens.
+    Has no stance — goal is to contribute domain expertise toward a nuanced synthesis.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        motion: str,
+        domain: str,
+        llm_provider: str = LLM_PROVIDER,
+        **model_params,
+    ):
+        self.domain = domain
+        system_prompt = PANEL_PARTICIPANT_PROMPT.format(motion=motion, domain=domain)
+        super().__init__(name, system_prompt, "panelist", llm_provider, **model_params)

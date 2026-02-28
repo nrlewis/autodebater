@@ -56,7 +56,7 @@ class DialogueConverter(object):
     """
 
     def __init__(self):
-        self.role_conversion = {"debater": "user", "moderator": "user"}
+        self.role_conversion = {"debater": "user", "moderator": "user", "panelist": "user"}
 
     def convert_message(self, message: DialogueMessage) -> Tuple:
         """

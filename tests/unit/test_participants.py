@@ -137,9 +137,9 @@ def test_judge_summarize(judge_mock_llm_wrapper_factory):
 
 
 def test_dynamic_expert_judge_discovers_expertise(mocker):
-    """DynamicExpertJudge makes an expertise-discovery call on init."""
+    """DynamicExpertJudge lazily discovers expertise on first respond() call."""
     mock_llm = MagicMock()
-    # First call: expertise discovery; second call onwards: judging
+    # First call: expertise discovery; second call: actual judging
     mock_llm.generate_text_from_messages.side_effect = [
         "machine learning and AI ethics",
         "70 Strong argument for the motion.",
@@ -149,11 +149,20 @@ def test_dynamic_expert_judge_discovers_expertise(mocker):
         return_value=mock_llm,
     )
 
+    from autodebater.dialogue import DialogueMessage
     motion = "AI will surpass human intelligence"
     judge = DynamicExpertJudge(name="ExpertJudge", motion=motion, llm_provider="openai")
 
+    # Expertise NOT yet discovered — construction is free of LLM calls
+    assert judge.expertise is None
+
+    # Trigger first respond() — this discovers expertise then judges
+    msg = DialogueMessage(name="Debater1", role="debater", message="AI is advancing.", debate_id="1")
+    response = judge.respond([msg])
+
     assert judge.expertise == "machine learning and AI ethics"
     assert "machine learning and AI ethics" in judge.system_prompt
+    assert response == "70 Strong argument for the motion."
 
 
 def test_moderator_opening(mocker):
