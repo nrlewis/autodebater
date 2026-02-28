@@ -126,30 +126,36 @@ After the epochs are completed, the judges will summarize their interpretations 
 The score is set such that a score closer to zero means the judges are AGAINST the motion, and a score closer to 100 means they are FOR the motion.
 There is a running score showing the geometric mean of the score.
 
-## Conceptual Description of the OOP Model
+## Architecture
 
-The AutoDebater library follows an Object-Oriented Programming (OOP) model that structures the code into classes representing different entities and roles in a debate. Here is a conceptual overview of the key components:
+The library orchestrates LLM debates through four layers:
 
-### Core Classes
+### LLM Layer
 
-- **Participant**: An abstract base class representing a participant in the debate. It initializes the model to be used, sets the system prompt, and handles the message passing to and from the LLM.
-  - **Debater**: A subclass of Participant. Represents a debater in the debate. Debaters take a stance (for or against the motion) and respond based on the chat history.
-  - **Judge**: A subclass of Participant. Represents a judge in the debate. Judges listen to the debate, score the arguments, and provide a summary at the end.
-    - **BullshitDetector**: A specific type of judge focused on identifying logical fallacies and inconsistencies.
+`LLMWrapper` (ABC) → `OpenAILLMWrapper` / `AzureOpenAILLMWrapper`, selected via `LLMWrapperFactory`. Both use `langchain-openai` under the hood. The factory key is the `llm_provider` string (`"openai"` or `"azure"`), passed via the `--llm` CLI flag or the `llm_provider` constructor argument.
 
-### Debate Management
+### Participants Layer
 
-- **Debate**: An abstract base class managing the core logic of a debate, including registering participants and handling the message flow.
-  - **SimpleDebate**: A subclass of Debate for simple debates between two debaters.
-  - **JudgedDebate**: A subclass of Debate for debates with judges. Manages the scoring and summarizing of the debate.
+`Participant` (ABC) holds a `chat_history` list of `(role, content)` tuples that grows as the debate progresses. Each participant owns its own `LLMWrapper` instance.
 
-### Utility Classes
+- **Debater** — argues for or against a motion; its stance is embedded in the system prompt.
+- **Judge** — scores each round (0–100) and produces a `summarize_judgement()` at the end.
+- **BullshitDetector** — a `Judge` subclass with a logical-fallacy-focused system prompt.
 
-- **DialogueMessage**: Represents a message in the debate, including the sender, role, stance, and the message content.
-- **DialogueHistory**: Manages the history of dialogue messages exchanged during the debate.
-- **DialogueConverter**: Converts dialogue messages into the format required by the LLM.
-- **LLMWrapper**: An abstract base class for wrapping LLM function calls. Subclasses handle specific LLM implementations like OpenAI.
-  - **OpenAILLMWrapper**: A subclass of LLMWrapper for interacting with OpenAI's LLMs.
+### Debate Layer
+
+`Debate` (ABC) manages `DialogueHistory` and iterates over debaters for `epochs` rounds, **yielding** `DialogueMessage` objects (generator pattern).
+
+- **SimpleDebate** — two debaters, round-robin message passing.
+- **JudgedDebate** — after each debater turn all judges score that message; a running geometric-mean score is tracked.
+
+`DebateRunner` subclasses (`BasicJudgedDebateRunner`, `BasicSimpleDebateRunner`) wire up the default set of participants and expose `run_debate()` and (for judged) `get_judgements()`.
+
+### Dialogue Layer
+
+- **DialogueMessage** — dataclass representing one message (name, role, stance, judgement score, message text, debate_id).
+- **DialogueHistory** — simple list accumulator.
+- **DialogueConverter** — translates `DialogueMessage` objects into `(role, content)` tuples for the LLM; judge messages are stripped out so debaters never see judge scores.
 
 ### Library
 
@@ -184,7 +190,7 @@ You can increase or decrease the number of participants: debaters and judges.
 
 ## TODOs
 
-1. Extend LLMWrapper for Azure OpenAI and Claude
+1. ~~Extend LLMWrapper for Azure OpenAI~~ (done) — extend for Claude
 2. AutoGenerate Names
 3. Insert Moderator for a moderated debate
 4. Allow prompt configuration from CLI
